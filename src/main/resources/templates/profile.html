@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PJATalK - User Profile</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <th:insert th:replace="~{parts/_header.html :: navCss}"></th:insert>
+    <th:insert th:replace="~{parts/_post.html :: postCss}"></th:insert>
+    <style>
+        html, body {
+            height: 100%;
+            background-color: #f0f2f5;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        .profile-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .profile-profile-pic {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+        }
+        .profile-header {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .profile-header h2 {
+            margin-top: 10px;
+        }
+        .profile-section {
+            margin-top: 20px;
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .stat a:hover {
+            text-decoration: underline;
+        }
+        .recent-activity-box {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .no-posts-found {
+            text-align: center;
+            color: #666;
+            font-size: 1.2em;
+            margin-top: 20px;
+        }
+        h5 {
+            color: black; /* Set the text color to black */
+        }
+        .alert-success {
+            margin-top: 20px;
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .btn-follow, .btn-unfollow {
+            width: 100px; /* Adjust the width as needed */
+            height: 38px; /* Adjust the height as needed */
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<!-- Navigation Bar -->
+<nav th:replace="~{parts/_header.html :: navbar(${loggedInUser}, ${hasNewNotifications})}"></nav>
+
+<!-- Main Content -->
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <!-- Profile Header -->
+            <div class="profile-header text-center">
+                <img th:src="@{/img/profilepic.png}" class="profile-profile-pic" alt="Profile Picture">
+                <h2 th:text="${user.user.getUsername()}">Username</h2>
+                <p class="text-muted" th:text="${user.user.getId()}">ID</p>
+                <!-- Follow/Unfollow Button -->
+                <div th:if="${followStatus == 1}">
+                    <form th:action="@{/user/unfollow}" th:object="${followRequest}" method="post">
+                        <input type="hidden" name="f_follower_id" th:value="${loggedInUser.getId()}"/>
+                        <input type="hidden" name="f_user_id" th:value="${user.user.getId()}"/>
+                        <button type="submit" class="btn btn-outline-secondary btn-sm ml-auto btn-unfollow">Unfollow</button>
+                    </form>
+                </div>
+                <div th:if="${followStatus == -1}">
+                    <form th:action="@{/user/follow}" th:object="${followRequest}" method="post">
+                        <input type="hidden" name="f_follower_id" th:value="${loggedInUser.getId()}"/>
+                        <input type="hidden" name="f_user_id" th:value="${user.user.getId()}"/>
+                        <button type="submit" class="btn btn-primary btn-follow">Follow</button>
+                    </form>
+                </div>
+                <p th:if="${unfollowSuccess}" class="alert alert-success" th:text="|You have unfollowed ${user.user.username}|"></p>
+                <p th:if="${followSuccess}" class="alert alert-success" th:text="|You are now following ${user.user.username}|"></p>
+                <div class="profile-stats">
+                    <div class="stat">
+                        <span th:text="${user.followerCounter}">0</span><br>
+                        <a th:href="@{'/user/' + ${user.user.getId()} + '/followers'}">Followers</a>
+                    </div>
+                    <div class="stat">
+                        <span th:text="${user.followingCounter}">0</span><br>
+                        <a th:href="@{'/user/' + ${user.user.getId()} + '/followers'}">Following</a>
+                    </div>
+                </div>
+                <div class="profile-section short-bio-box">
+                    <h5>Short bio:</h5>
+                    <p th:if="${user.user.getShortBio() != null && !user.user.getShortBio().isEmpty()}" th:text="${user.user.getShortBio()}">Short bio about the user.</p>
+                </div>
+            </div>
+
+            <!-- Recent Activity Section -->
+            <div class="profile-section recent-activity-box">
+                <h5>Recent Activity</h5>
+                <div th:if="${!user.posts.isEmpty()}" th:each="post : ${user.posts}">
+                    <div th:replace="~{parts/_post.html :: post(${isClickableLink})}"></div>
+                </div>
+                <div th:unless="${!user.posts.isEmpty()}" class="no-posts-found" th:text="|No posts found.|"></div>
+                <div th:if="${!user.posts.isEmpty()}">
+                    <form th:action="@{/user/{id}(id=${user.user.getId()})}" method="get">
+                        <input type="hidden" name="size" th:value="${size + 5}"/>
+                        <button type="submit" th:if="${user.posts.size() >= size}" class="btn btn-primary btn-block">Load More</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer mt-auto py-3 bg-light">
+    <div class="container">
+        <span class="text-muted">© 2024 PJATalK. All rights reserved.</span>
+    </div>
+</footer>
+<th:insert th:replace="~{parts/_post.html :: postScripts}"></th:insert>
+<!--<script>-->
+<!--    document.addEventListener('DOMContentLoaded', function() {-->
+<!--        document.querySelectorAll('.like-form').forEach(function(form) {-->
+<!--            form.addEventListener('submit', function(event) {-->
+<!--                event.preventDefault();-->
+<!--                const postId = form.querySelector('input[name="postId"]').value;-->
+<!--                const likeCountElement = document.getElementById(`likeCount-${postId}`);-->
+<!--                const likeIcon = document.getElementById(`likeIcon-${postId}`);-->
+
+<!--                // Debugging logs-->
+<!--                if (!likeCountElement) {-->
+<!--                    console.error(`Like count element with ID likeCount-${postId} not found.`);-->
+<!--                }-->
+<!--                if (!likeIcon) {-->
+<!--                    console.error(`Like icon element with ID likeIcon-${postId} not found.`);-->
+<!--                }-->
+
+<!--                fetch(form.action, {-->
+<!--                    method: 'POST',-->
+<!--                    body: new URLSearchParams(new FormData(form)),-->
+<!--                    headers: {-->
+<!--                        'Content-Type': 'application/x-www-form-urlencoded',-->
+<!--                        'X-Requested-With': 'XMLHttpRequest'-->
+<!--                    }-->
+<!--                })-->
+<!--                    .then(response => response.json())-->
+<!--                    .then(data => {-->
+<!--                        if (likeCountElement && likeIcon) {-->
+<!--                            likeCountElement.textContent = data.likeCount;-->
+<!--                            if (data.liked) {-->
+<!--                                likeIcon.src = '/img/likedHeart.png'; // path to the filled heart icon-->
+<!--                            } else {-->
+<!--                                likeIcon.src = '/img/heart.png'; // path to the regular heart icon-->
+<!--                            }-->
+<!--                        }-->
+<!--                    })-->
+<!--                    .catch(error => console.error('Error:', error));-->
+<!--            });-->
+<!--        });-->
+<!--    });-->
+<!--</script>-->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

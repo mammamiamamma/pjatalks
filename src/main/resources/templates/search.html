@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search Results</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <th:insert th:replace="~{parts/_header.html :: navCss}"></th:insert>
+    <th:insert th:replace="~{parts/_post.html :: postCss}"></th:insert>
+    <style>
+        .profile-header {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .profile-pic, .post-pic {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-right: 20px;
+        }
+        .profile-info, .post-info {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .profile-info h5, .post-info h5 {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+        .profile-info p, .post-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .btn-follow, .btn-view {
+            width: 100px; /* Adjust the width as needed */
+            height: 38px; /* Adjust the height as needed */
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+        .user-details, .post-details {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+        .follow-btn-container, .view-btn-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            flex-grow: 1;
+        }
+        h5 {
+            color: black;
+        }
+    </style>
+</head>
+<body>
+<nav th:replace="~{parts/_header.html :: navbar(${loggedInUser}, ${hasNewNotifications})}"></nav>
+<div class="container mt-4">
+    <h2>Top 3 search results for "<span th:text="${query}"></span>"</h2>
+
+    <div class="mt-4">
+        <h3>Users</h3>
+        <div th:if="${users.isEmpty()}">
+            <p>No users found.</p>
+        </div>
+        <div th:each="user : ${users}">
+            <div class="profile-header card">
+                <a th:href="@{/user/{id}(id=${user.user.id})}" class="user-details d-flex align-items-center">
+                    <img th:src="@{/img/profilepic.png}" class="profile-pic" alt="Profile Picture">
+                    <div class="profile-info">
+                        <h5 th:text="${user.user.username}">Username</h5>
+                        <p th:text="'Posts: ' + ${user.postCount} + ' | Followers: ' + ${user.followerCounter} + ' | Following: ' + ${user.followingCounter}">Posts: 123 | Followers: 456 | Following: 789</p>
+                        <p th:text="${user.user.shortBio}">This is a short bio of the user. It provides a brief introduction or some personal information.</p>
+                    </div>
+                    <div class="follow-btn-container">
+                        <div th:if="${user.isFollowed==-1}">
+                            <form th:action="@{/user/follow}" th:object="${followRequest}" method="post">
+                                <input type="hidden" name="f_follower_id" th:value="${loggedInUser.getId()}"/>
+                                <input type="hidden" name="f_user_id" th:value="${user.user.id}"/>
+                                <button type="submit" class="btn btn-primary btn-follow">Follow</button>
+                            </form>
+                        </div>
+                        <div th:if="${user.isFollowed==1}">
+                            <form th:action="@{/user/unfollow}" th:object="${unfollowRequest}" method="post">
+                                <input type="hidden" name="f_follower_id" th:value="${loggedInUser.getId()}"/>
+                                <input type="hidden" name="f_user_id" th:value="${user.user.id}"/>
+                                <button type="submit" class="btn btn-outline-secondary btn-follow">Unfollow</button>
+                            </form>
+                        </div>
+                    </div>
+                </a>
+
+            </div>
+        </div>
+
+        <h3>Posts</h3>
+        <div th:if="${posts.isEmpty()}">
+            <p>No posts found.</p>
+        </div>
+        <div th:each="post : ${posts}">
+            <div th:replace="~{parts/_post.html :: post(${true})}"></div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

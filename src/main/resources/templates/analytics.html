@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PJATalK - Admin Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <th:insert th:replace="~{parts/_header.html :: navCss}"></th:insert>
+    <style>
+        html, body {
+            height: 100%;
+            background-color: #f0f2f5;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        .container-flex {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .navbar .form-inline {
+            flex-grow: 1;
+            justify-content: center;
+        }
+        .navbar .form-inline .input-group {
+            max-width: 500px;
+            width: 100%;
+        }
+        .icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+        .action-icon {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        .header-profile-pic {
+            width: 30px;
+            height: 30px;
+        }
+        .analytics-container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 30px;
+            margin: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .section-title {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .stat-box {
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+        }
+        .stat-box h4 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        .stat-box p {
+            font-size: 2em;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-list {
+            padding-left: 20px;
+        }
+        .stat-list li {
+            margin-bottom: 5px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+<!-- Navigation Bar -->
+<nav th:replace="~{parts/_header.html :: navbar(${loggedInUser}, ${hasNewNotifications})}"></nav>
+
+<!-- Main Content -->
+<div class="container-flex">
+    <div class="analytics-container">
+        <h2 class="section-title">Platform Analytics</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="stat-box">
+                    <h4>Total Users</h4>
+                    <p th:text="${totalUsers}">12345</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="stat-box">
+                    <h4>Active Users</h4>
+                    <p th:text="${activeUsers}">6789</p>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="stat-box">
+                    <h4>Total Posts</h4>
+                    <p th:text="${totalPosts}">23456</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="stat-box">
+                    <h4>Comments</h4>
+                    <p th:text="${totalComments}">34567</p>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-title">User Analytics</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="stat-box">
+                    <h4>Top Users by Posts</h4>
+                    <ul class="stat-list">
+                        <li th:each="entry : ${topUsersByPostsMap.keySet()}">
+                            <span th:text="${entry.username}"></span>: <span th:text="${topUsersByPostsMap.get(entry)}"></span> posts
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="stat-box">
+                    <h4>Top Users by Likes</h4>
+                    <ul class="stat-list">
+                        <li th:each="entry : ${topUsersByLikesMap.keySet()}">
+                            <span th:text="${entry.username}"></span>: <span th:text="${topUsersByLikesMap.get(entry)}"></span> likes
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer th:replace="~{parts/_footer.html :: footer}"></footer>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

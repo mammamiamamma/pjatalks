@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <title>FragPost</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <th:block th:fragment="postCss">
+        <style>
+            .profile-pic {
+                width: 45px;
+                height: 45px;
+            }
+            .like-icon {
+                width: 24px;
+                height: 24px;
+                cursor: pointer;
+            }
+            .post-header {
+                border-bottom: 1px solid #ddd;
+                padding: 10px;
+            }
+            .post-footer {
+                padding: 10px;
+                border-top: 1px solid #ddd;
+            }
+            .timestamp {
+                margin-left: auto;
+                color: #999;
+                font-size: 0.9em;
+            }
+            .like-count, .comment-count {
+                margin-left: 8px;
+                margin-right: 10px;
+                font-size: 0.9em;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+<div class="post mb-3" th:fragment="post(isClickableLink)">
+    <div class="card">
+        <div class="post-header d-flex align-items-center">
+            <a th:href="@{/user/{id}(id=${post.user.id})}" class="d-flex align-items-center">
+                <img th:src="@{/img/profilepic.png}" class="mr-3 rounded-circle profile-pic" alt="Profile Picture">
+                <h5 class="mt-0 mb-0" th:text="${post.user.username}">Username</h5>
+            </a>
+            <span class="timestamp ml-auto" th:text="${#dates.format(post.post.timestamp, 'dd MMM yyyy HH:mm')}">2 hours ago</span>
+        </div>
+        <div class="card-body">
+            <p class="card-text" th:text="${post.post.text}">Lorem Ipsum is simply dummy text of the printing and typesetting industry...</p>
+        </div>
+        <div class="post-footer d-flex justify-content-start align-items-center">
+            <form th:action="@{/post/like}" method="post" class="like-form d-flex align-items-center">
+                <input type="hidden" name="postId" th:value="${post.post_id}"/>
+                <button type="submit" class="btn btn-link p-0">
+                    <img th:unless="${post.isAlreadyLikedByUser}" th:src="@{/img/heart.png}" class="like-icon" th:id="|likeIcon-${post.post_id}|" alt="Like">
+                    <img th:if="${post.isAlreadyLikedByUser}" th:src="@{/img/likedHeart.png}" class="like-icon" th:id="|likeIcon-${post.post_id}|" alt="Like">
+                </button>
+                <span th:id="|likeCount-${post.post_id}|" class="like-count ml-2" th:text="${post.likeCount}"></span>
+            </form>
+            <div class="d-flex align-items-center ml-3">
+                <img th:src="@{/img/chat-bubble.png}" class="action-icon" alt="Comment">
+                <span class="comment-count ml-2" th:text="${post.commentCount}"></span>
+            </div>
+            <div class="ml-auto d-flex align-items-center">
+                <div th:if="${#authorization.expression('hasAuthority(''ADMIN'')')}">
+                    <form th:action="@{/admin/deletePost}" method="post" class="ml-2">
+                        <input type="hidden" name="postId" th:value="${post.post_id}"/>
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                </div>
+                <a th:if="${isClickableLink}" th:href="@{/post/{id}(id=${post.post_id})}" class="btn btn-outline-secondary btn-sm ml-2">View post</a>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block th:fragment="postScripts">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.like-form').forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    const postId = form.querySelector('input[name="postId"]').value;
+                    const likeCountElement = document.getElementById(`likeCount-${postId}`);
+                    const likeIcon = document.getElementById(`likeIcon-${postId}`);
+
+                    // Debugging logs
+                    if (!likeCountElement) {
+                        console.error(`Like count element with ID likeCount-${postId} not found.`);
+                    }
+                    if (!likeIcon) {
+                        console.error(`Like icon element with ID likeIcon-${postId} not found.`);
+                    }
+
+                    fetch(form.action, {
+                        method: 'POST',
+                        body: new URLSearchParams(new FormData(form)),
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (likeCountElement && likeIcon) {
+                                likeCountElement.textContent = data.likeCount;
+                                if (data.liked) {
+                                    likeIcon.src = '/img/likedHeart.png'; // path to the filled heart icon
+                                } else {
+                                    likeIcon.src = '/img/heart.png'; // path to the regular heart icon
+                                }
+                            }
+                        })
+                        .catch(error => console.error('Error:', error));
+                });
+            });
+        });
+    </script>
+</th:block>
+</body>
+</html>

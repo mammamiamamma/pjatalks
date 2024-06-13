@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PJATalK - Home</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <th:insert th:replace="~{parts/_header.html :: navCss}"></th:insert>
+    <th:insert th:replace="~{parts/_post.html :: postCss}"></th:insert>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+        }
+        .profile-pic {
+            width: 45px;
+            height: 45px;
+        }
+        .icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+        .create-post {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            background-color: #f9f9f9;
+        }
+        .create-post textarea {
+            resize: none;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        .container {
+            flex-grow: 1;
+        }
+        .card {
+            border-radius: 20px;
+        }
+        .btn-primary {
+            border-radius: 15px;
+        }
+        .alert {
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+        }
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        .load-more-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        .load-more-btn {
+            background: white;
+            border: 2px solid #6a11cb; /* Border color to match the gradient */
+            color: #6a11cb; /* Text color to match the gradient */
+            border-radius: 15px;
+            padding: 10px 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .load-more-btn:hover {
+            background-color: #6a11cb; /* Background color on hover */
+            color: #ffffff; /* Text color on hover */
+            border-color: #ffffff; /* Border color on hover */
+        }
+        h5 {
+            color: black; /* Set the text color to black */
+        }
+        .feed-title {
+            color: white;
+            margin-bottom: 20px;
+        }
+        .alert {
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+        }
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+<!-- Navigation Bar -->
+<nav th:replace="~{parts/_header.html :: navbar(${loggedInUser}, ${hasNewNotifications})}"></nav>
+<!-- Main Content -->
+<div class="container mt-4">
+    <div class="row">
+        <!-- Feed -->
+        <div class="col-md-8">
+            <!-- Feed Title -->
+            <h1 th:if="${personalized}" class="feed-title">Feed - Personalized</h1>
+            <h1 th:unless="${personalized}" class="feed-title">Feed</h1>
+            <!-- Create Post Section -->
+            <p class="alert alert-danger" th:if="${errorValid != null}" th:text="${errorValid}"></p>
+            <div class="create-post">
+                <div class="d-flex align-items-center">
+                    <img th:src="@{/img/profilepic.png}" class="mr-3 rounded-circle header-profile-pic" alt="Profile Picture">
+                    <h5 class="mt-0 mb-0">What's on your mind?</h5>
+                </div>
+                <form th:object="${newPost}" th:action="@{/post/newPost}" method="post">
+                    <input type="hidden" th:attr="name='user_id'" th:value="${loggedInUser.getId()}"/>
+                    <input type="hidden" name="timestamp" th:value="${#dates.format(standardDate, 'yyyy-MM-dd HH:mm:ss')}"/>
+                    <div class="form-group mt-3">
+                        <p class="alert alert-danger" th:if="${error != null}" th:text="${error}"></p>
+                        <p class="alert alert-danger" th:if="${errorMap != null && errorMap.containsKey('user_id')}" th:text="${errorMap['user_id']}"></p>
+                        <p class="alert alert-danger" th:if="${errorMap != null && errorMap.containsKey('text')}" th:text="${errorMap['text']}"></p>
+                        <p class="alert alert-danger" th:if="${errorMap != null && errorMap.containsKey('timestamp')}" th:text="${errorMap['timestamp']}"></p>
+                        <p class="alert alert-danger" th:if="${errorMap != null && errorMap.containsKey('hashtags')}" th:text="${errorMap['hashtags']}"></p>
+                        <textarea th:field="*{text}" id="text" class="form-control" rows="3" placeholder="Write something..." name="text"></textarea>
+                        <input type="hidden" id="hashtags" name="hashtags" th:field="*{hashtags}"/>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary">Upload post</button>
+                    </div>
+                </form>
+            </div>
+            <!-- Resulting post -->
+            <!--            <div th:if="${resultPost!=null}">-->
+            <!--                <div th:replace="~{parts/_post.html :: post(post=${resultPost})}"></div>-->
+            <!--            </div>-->
+            <!-- Post -->
+            <div id="posts-container">
+                <div th:each="post : ${postPage.content}">
+                    <div th:replace="~{parts/_post.html :: post(${true})}"></div>
+                </div>
+            </div>
+            <div class="load-more-container">
+                <form th:action="@{/feed}" method="get">
+                    <input type="hidden" name="size" th:value="${postPage.size+1}"/>
+                    <button type="submit" class="load-more-btn" th:if="${postPage.hasNext()}">Load Posts</button>
+                </form>
+            </div>
+        </div>
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Trending Topics</h5>
+                    <ul class="list-group list-group-flush">
+                        <li th:if="${topHash == null || topHash.isEmpty()}" class="list-group-item">
+                            <span>No topics trending for today, come back tomorrow!</span>
+                        </li>
+                        <li th:each="trendingHash : ${topHash}" th:if="${topHash != null && !topHash.isEmpty()}" class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <img th:src="@{/img/hashtag.png}" class="icon" alt="Hashtag Icon">
+                                <span th:text="${trendingHash.id}" style="font-weight: bold;"></span>
+                            </div>
+                            <span class="badge badge-primary badge-pill" th:text="${trendingHash.count}"></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Suggested Users</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <img th:src="@{/img/profilepic.png}" class="mr-3 rounded-circle profile-pic" alt="Profile Picture">
+                            User 1 <button class="btn btn-primary btn-sm float-right">Follow</button>
+                        </li>
+                        <li class="list-group-item">
+                            <img th:src="@{/img/profilepic.png}" class="mr-3 rounded-circle profile-pic" alt="Profile Picture">
+                            User 2 <button class="btn btn-primary btn-sm float-right">Follow</button>
+                        </li>
+                        <!-- Add more users as needed -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer th:replace="~{parts/_footer.html :: footer}"></footer>
+<th:insert th:replace="~{parts/_post.html :: postScripts}"></th:insert>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

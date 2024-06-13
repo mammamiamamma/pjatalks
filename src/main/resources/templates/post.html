@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PJATalK - View Post</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <th:insert th:replace="~{parts/_header.html :: navCss}"></th:insert>
+    <th:insert th:replace="~{parts/_post.html :: postCss}"></th:insert>
+    <style>
+        html, body {
+            height: 100%;
+            background-color: #f0f2f5;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        .header-profile-pic {
+            width: 30px;
+            height: 30px;
+        }
+        .icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+        .create-post {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            background-color: #f9f9f9;
+        }
+        .create-post textarea {
+            resize: none;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        h5 {
+            color: black; /* Set the text color to black */
+        }
+    </style>
+</head>
+<body>
+<!-- Navigation Bar -->
+<nav th:replace="~{parts/_header.html :: navbar(${loggedInUser}, ${hasNewNotifications})}"></nav>
+<!-- Main Content -->
+<div class="container mt-4">
+    <div class="row">
+        <!-- Feed -->
+        <div class="col-md-8 offset-md-2">
+            <!-- Post -->
+            <div th:replace="~{parts/_post.html :: post(${isClickableLink})}"></div>
+<!--            <div class="post mb-3">-->
+<!--                <div class="card">-->
+<!--                    <div class="post-header d-flex align-items-center">-->
+<!--                        <img th:src="@{/img/profilepic.png}" class="mr-3 rounded-circle profile-pic" alt="Profile Picture">-->
+<!--                        <h5 class="mt-0 mb-0">Username</h5>-->
+<!--                        <span class="timestamp ml-auto">2 hours ago</span>-->
+<!--                    </div>-->
+<!--                    <div class="card-body">-->
+<!--                        <p class="card-text">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>-->
+<!--                        &lt;!&ndash; Uncomment if there is a post image &ndash;&gt;-->
+<!--                        &lt;!&ndash; <img src="C:\Users\Ilya\Desktop\tpoprojectpics\rsc\profilepic.png" class="img-fluid" alt="Post Image"> &ndash;&gt;-->
+<!--                    </div>-->
+<!--                    <div class="post-footer d-flex justify-content-start align-items-center">-->
+<!--                        <img th:src="@{/img/heart.png}" class="action-icon" alt="Like">-->
+<!--                        <span class="like-count">123</span>-->
+<!--                        <img th:src="@{/img/heart.png}" class="action-icon" alt="Comment">-->
+<!--                        <span class="comment-count">45</span>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+            <!-- Comments Section -->
+            <div class="comments-section">
+                <h5>Comments</h5>
+                <div class="create-post">
+                    <div class="d-flex align-items-center">
+                        <img th:src="@{/img/profilepic.png}" class="mr-3 rounded-circle header-profile-pic" alt="Profile Picture">
+                        <h5 class="mt-0 mb-0">Add a comment</h5>
+                    </div>
+                    <form th:object="${newComment}" th:action="@{/post/newComment}" method="post">
+                        <input type="hidden" th:attr="name='user_id'" th:value="${loggedInUser.getId()}"/>
+                        <input type="hidden" th:attr="name='post_id'" th:value="${post.post_id}"/>
+                        <input type="hidden" th:attr="name='timestamp'" th:value="${#dates.format(standardDate, 'yyyy-MM-dd HH:mm:ss')}"/>
+                        <div class="form-group mt-3">
+                            <p class="alert alert-danger" th:if="${error != null}" th:text="${error}"></p>
+                            <p class="alert alert-danger" th:if="${errorMap != null && errorMap.containsKey('user_id')}" th:text="${errorMap['user_id']}"></p>
+                            <p class="alert alert-danger" th:if="${errorMap != null && errorMap.containsKey('post_id')}" th:text="${errorMap['post_id']}"></p>
+                            <p class="alert alert-danger" th:if="${errorMap != null && errorMap.containsKey('text')}" th:text="${errorMap['text']}"></p>
+                            <p class="alert alert-danger" th:if="${errorMap != null && errorMap.containsKey('timestamp')}" th:text="${errorMap['timestamp']}"></p>
+                            <textarea th:field="*{text}" id="text" class="form-control" rows="3" placeholder="Write something..." name="text"></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">Upload comment</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="post-comment mb-3">
+                    <div th:each="comment : ${commentList}">
+                        <div th:replace="~{parts/_comment.html :: comment}"></div>
+                    </div>
+<!--                    <div class="card">-->
+<!--                        <div class="post-header d-flex align-items-center">-->
+<!--                            <img th:src="@{/img/profilepic.png}" class="mr-3 rounded-circle profile-pic" alt="Profile Picture">-->
+<!--                            <h6 class="mt-0 mb-0">Commenter Name</h6>-->
+<!--                            <span class="timestamp ml-auto">1 hour ago</span>-->
+<!--                        </div>-->
+<!--                        <div class="card-body">-->
+<!--                            <p class="card-text">This is a comment text. Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>-->
+<!--                        </div>-->
+<!--                    </div>-->
+                </div>
+                <!-- Add more comments as needed -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer mt-auto py-3 bg-light">
+    <div class="container">
+        <span class="text-muted">© 2024 PJATalK. All rights reserved.</span>
+    </div>
+</footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.like-form').forEach(function(form) {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const postId = form.querySelector('input[name="postId"]').value;
+                const likeCountElement = document.getElementById(`likeCount-${postId}`);
+                const likeIcon = document.getElementById(`likeIcon-${postId}`);
+
+                // Debugging logs
+                if (!likeCountElement) {
+                    console.error(`Like count element with ID likeCount-${postId} not found.`);
+                }
+                if (!likeIcon) {
+                    console.error(`Like icon element with ID likeIcon-${postId} not found.`);
+                }
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: new URLSearchParams(new FormData(form)),
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (likeCountElement && likeIcon) {
+                            likeCountElement.textContent = data.likeCount;
+                            if (data.liked) {
+                                likeIcon.src = '/img/likedHeart.png'; // path to the filled heart icon
+                            } else {
+                                likeIcon.src = '/img/heart.png'; // path to the regular heart icon
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            });
+        });
+    });
+</script>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

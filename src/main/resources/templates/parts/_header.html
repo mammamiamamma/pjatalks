@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FragNavbar</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <th:block th:fragment="navCss">
+        <style>
+            .header-profile-pic {
+                width: 30px;
+                height: 30px;
+            }
+            .action-icon {
+                width: 24px;
+                height: 24px;
+                cursor: pointer;
+            }
+            .navbar .form-inline {
+                flex-grow: 1;
+                justify-content: center;
+            }
+            .navbar .form-inline .input-group {
+                max-width: 500px;
+                width: 100%;
+            }
+            /*.search-container {*/
+            /*    position: relative;*/
+            /*    width: 100%;*/
+            /*    max-width: 500px;*/
+            /*}*/
+            .icon {
+                width: 20px;
+                height: 20px;
+                margin-right: 5px;
+            }
+            /*.suggestions-box {*/
+            /*    position: absolute;*/
+            /*    top: 100%; !* Position it just below the input *!*/
+            /*    left: 0;*/
+            /*    background-color: #fff;*/
+            /*    border: 1px solid #ddd;*/
+            /*    width: 100%;*/
+            /*    z-index: 1000;*/
+            /*    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);*/
+            /*}*/
+
+            /*.suggestion-item {*/
+            /*    padding: 10px;*/
+            /*    cursor: pointer;*/
+            /*}*/
+
+            /*.suggestion-item:hover {*/
+            /*    background-color: #f0f0f0;*/
+            /*}*/
+        </style>
+    </th:block>
+</head>
+<body>
+<nav th:fragment="navbar(loggedInUser, hasNewNotifications)" class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" th:href="@{/feed}">PJATalK</a>
+    <div class="collapse navbar-collapse">
+        <form class="form-inline mx-auto search-container" th:action="@{/search/results}" method="get">
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">
+                        <button type="submit" style="border: none; background: none; padding: 0;">
+                            <img th:src="@{/img/search-icon.png}" class="icon" alt="Search">
+                        </button>
+                    </span>
+                </div>
+                <input type="text" id="search-input" name="query" class="form-control" placeholder="Search" aria-label="Search" aria-describedby="basic-addon1">
+            </div>
+        </form>
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/feed/personalized}"> <!-- for following/ following posts-->
+                    <img th:src="@{/img/people.png}" class="action-icon" alt="Following">
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/feed}">
+                    <img th:src="@{/img/home.png}" class="action-icon" alt="Home Feed">
+                </a>
+            </li>
+            <li class="nav-item" th:if="${loggedInUser != null}">
+                <a class="nav-link" th:if="${hasNewNotifications}" th:href="@{/notifications/{id}(id=${loggedInUser.id})}"> <!-- for notifications-->
+                    <img th:src="@{/img/newNotifBell.png}" class="action-icon" alt="Notifications">
+                </a>
+                <a class="nav-link" th:unless="${hasNewNotifications}" th:href="@{/notifications/{id}(id=${loggedInUser.id})}"> <!-- for notifications-->
+                    <img th:src="@{/img/bell.png}" class="action-icon" alt="Notifications">
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link d-flex align-items-center" th:if="${loggedInUser != null}" th:href="@{/user/{id}(id=${loggedInUser.id})}">
+                    <img th:src="@{/img/profilepic.png}" class="mr-2 rounded-circle header-profile-pic" alt="Profile Picture">
+                    <span th:text="${loggedInUser.username}">Profile</span>
+                </a>
+                <a class="nav-link d-flex align-items-center" th:unless="${loggedInUser != null}" th:href="@{/login}">
+                    <img th:src="@{/img/profilepic.png}" class="mr-2 rounded-circle header-profile-pic" alt="Profile Picture">
+                    <span>Profile</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<!--<th:block th:fragment="navScripts">-->
+<!--    <script>-->
+<!--        document.addEventListener('DOMContentLoaded', function() {-->
+<!--            const searchInput = document.getElementById('search-input');-->
+<!--            const suggestionsBox = document.getElementById('search-suggestions');-->
+
+<!--            searchInput.addEventListener('input', function() {-->
+<!--                const query = searchInput.value.trim();-->
+<!--                console.log("Search input:", query);  // Debug log-->
+<!--                if (query.length > 0) {-->
+<!--                    fetchSuggestions(query);-->
+<!--                } else {-->
+<!--                    suggestionsBox.style.display = 'none';-->
+<!--                }-->
+<!--            });-->
+
+<!--            searchInput.addEventListener('keypress', function(event) {-->
+<!--                if (event.key === 'Enter') {-->
+<!--                    event.preventDefault();-->
+<!--                    window.location.href = `/search?query=${encodeURIComponent(searchInput.value.trim())}`;-->
+<!--                }-->
+<!--            });-->
+
+<!--            function fetchSuggestions(query) {-->
+<!--                fetch(`/search/suggestions?query=${encodeURIComponent(query)}`)-->
+<!--                    .then(response => response.json())-->
+<!--                    .then(data => {-->
+<!--                        console.log("Data received:", data);  // Debug log-->
+<!--                        displaySuggestions(data, query);-->
+<!--                    })-->
+<!--                    .catch(error => console.error('Error fetching suggestions:', error));-->
+<!--            }-->
+
+<!--            function displaySuggestions(suggestions, query) {-->
+<!--                console.log("Displaying suggestions:", suggestions);  // Debug log-->
+<!--                suggestionsBox.innerHTML = '';-->
+
+<!--                // Add the "Search in Users" and "Search in Posts" options-->
+<!--                const searchInUsersItem = document.createElement('div');-->
+<!--                searchInUsersItem.className = 'suggestion-item';-->
+<!--                searchInUsersItem.textContent = `Search for "${query}" in Users`;-->
+<!--                searchInUsersItem.addEventListener('click', function() {-->
+<!--                    window.location.href = `/search/users?query=${encodeURIComponent(query)}`;-->
+<!--                });-->
+<!--                suggestionsBox.appendChild(searchInUsersItem);-->
+
+<!--                const searchInPostsItem = document.createElement('div');-->
+<!--                searchInPostsItem.className = 'suggestion-item';-->
+<!--                searchInPostsItem.textContent = `Search for "${query}" in Posts`;-->
+<!--                searchInPostsItem.addEventListener('click', function() {-->
+<!--                    window.location.href = `/search/posts?query=${encodeURIComponent(query)}`;-->
+<!--                });-->
+<!--                suggestionsBox.appendChild(searchInPostsItem);-->
+
+<!--                if (suggestions.length > 0) {-->
+<!--                    suggestions.forEach(suggestion => {-->
+<!--                        const item = document.createElement('div');-->
+<!--                        item.className = 'suggestion-item';-->
+<!--                        item.textContent = suggestion;-->
+<!--                        item.addEventListener('click', function() {-->
+<!--                            searchInput.value = suggestion;-->
+<!--                            suggestionsBox.style.display = 'none';-->
+<!--                            window.location.href = `/search?query=${encodeURIComponent(suggestion)}`;-->
+<!--                        });-->
+<!--                        suggestionsBox.appendChild(item);-->
+<!--                    });-->
+<!--                    suggestionsBox.style.display = 'block';-->
+<!--                } else {-->
+<!--                    suggestionsBox.style.display = 'none';-->
+<!--                }-->
+<!--            }-->
+<!--        });-->
+<!--    </script>-->
+<!--</th:block>-->
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PJATalK - Login</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <th:insert th:replace="~{parts/_header.html :: navCss}"></th:insert>
+    <style>
+        html, body {
+            height: 100%;
+            background-color: #f0f2f5;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            /*align-items: center;*/
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+        }
+        .form-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            margin: 20px;
+        }
+        .alert {
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+        }
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+<nav th:replace="~{parts/_header.html :: navbar(${loggedInUser}, ${hasNewNotifications})}"></nav>
+<div class="d-flex flex-column align-items-center justify-content-center" style="height: 100vh;">
+    <div class="form-container">
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="login-tab" data-toggle="tab" href="#login" role="tab" aria-controls="login" th:classappend="${activeTab == null || activeTab == 'login'} ? 'active' : ''">Login</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="register-tab" data-toggle="tab" href="#register" role="tab" aria-controls="register" th:classappend="${activeTab == 'register'} ? 'active' : ''">Register</a>
+            </li>
+        </ul>
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade" id="login" role="tabpanel" aria-labelledby="login-tab" th:classappend="${activeTab == null || activeTab == 'login'} ? 'show active' : ''">
+                <form th:action="@{/login}" method="post" th:object="${loginInput}">
+                    <h3 class="mt-3">Login</h3>
+                    <p class="alert alert-danger" th:if="${errorLogin != null}" th:text="${errorLogin}"></p>
+                    <div class="form-group">
+                        <label for="loginUsername">Username</label>
+                        <p class="alert alert-danger" th:if="${errorMapLogin != null && errorMapLogin.containsKey('username')}" th:text="${errorMapLogin['username']}"></p>
+                        <input type="text" class="form-control" id="loginUsername" th:field="*{username}" placeholder="Enter username">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <p class="alert alert-danger" th:if="${errorMapLogin != null && errorMapLogin.containsKey('password')}" th:text="${errorMapLogin['password']}"></p>
+                        <input type="password" class="form-control" id="loginPassword" th:field="*{password}" placeholder="Password">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Login</button>
+                </form>
+            </div>
+            <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab" th:classappend="${activeTab == 'register'} ? 'show active' : ''">
+                <form th:action="@{/register}" method="post" th:object="${userInputDto}">
+                    <h3 class="mt-3">Register</h3>
+                    <div class="form-group">
+                        <label for="registerUsername">Username</label>
+                        <p class="alert alert-danger" th:if="${errorMapRegister != null && errorMapRegister.containsKey('username')}" th:text="${errorMapRegister['username']}"></p>
+                        <input type="text" class="form-control" id="registerUsername" th:field="*{username}" placeholder="Username">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail">Email address</label>
+                        <p class="alert alert-danger" th:if="${errorMapRegister != null && errorMapRegister.containsKey('emailAddress')}" th:text="${errorMapRegister['emailAddress']}"></p>
+                        <input type="email" class="form-control" id="registerEmail" th:field="*{emailAddress}" placeholder="Enter email">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Password</label>
+                        <p class="alert alert-danger" th:if="${errorMapRegister != null && errorMapRegister.containsKey('password')}" th:text="${errorMapRegister['password']}"></p>
+                        <input type="password" class="form-control" id="registerPassword" th:field="*{password}" placeholder="Password">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Register</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<footer th:replace="~{parts/_footer.html :: footer}"></footer>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

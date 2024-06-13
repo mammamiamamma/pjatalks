@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PJATalK - Notifications</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <th:insert th:replace="~{parts/_header.html :: navCss}"></th:insert>
+    <style>
+        html, body {
+            height: 100%;
+            background-color: #f0f2f5;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        .notification-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+        }
+        .type-of-action-icon {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+        }
+        .icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+        .notification-item {
+            border-bottom: 1px solid #ddd;
+            padding: 10px;
+        }
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+        .timestamp {
+            color: #999;
+            font-size: 0.9em;
+        }
+        .no-notifications {
+            text-align: center;
+            color: #666;
+            font-size: 1.2em;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<!-- Navigation Bar -->
+<nav th:replace="~{parts/_header.html :: navbar(${loggedInUser}, ${hasNewNotifications})}"></nav>
+
+<!-- Main Content -->
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="notification-container">
+                <h2>Notifications</h2>
+                <div th:if="${notifications.size() > 0}">
+                    <div th:each="notificationDto : ${notifications}" class="notification-item d-flex align-items-center">
+                        <img th:src="@{'/img/' + ${notificationDto.icon}}" class="mr-3 type-of-action-icon" alt="Notification icon">
+                        <img th:src="@{'/img/profilepic.png'}" class="mr-3 rounded-circle profile-pic" alt="Profile Picture">
+                        <div>
+                            <p class="mb-1">
+                                <strong th:text="${notificationDto.causer.username}">User</strong>
+                                <span th:text="${notificationDto.notification.content}">notification message</span>
+                            </p>
+                            <p class="timestamp mb-0" th:text="${notificationDto.notification.timestamp}">time ago</p>
+                        </div>
+                    </div>
+                </div>
+                <div th:if="${notifications.size() == 0}" class="no-notifications">
+                    <p>Wow, how empty...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer th:replace="~{parts/_footer.html :: footer}"></footer>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

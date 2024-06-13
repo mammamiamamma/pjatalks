@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PJATalK - User Followers & Following</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <th:insert th:replace="~{parts/_header.html :: navCss}"></th:insert>
+    <style>
+        html, body {
+            height: 100%;
+            background-color: #f0f2f5;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        .profile-pic {
+            width: 45px;
+            height: 45px;
+        }
+        .profile-profile-pic {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+        }
+        .profile-header {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .profile-header h2 {
+            margin-top: 10px;
+        }
+        .profile-section {
+            margin-top: 20px;
+        }
+        .followers-following-list {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .follower-item, .following-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .follower-item:last-child, .following-item:last-child {
+            border-bottom: none;
+        }
+        .follower-item img, .following-item img {
+            margin-right: 10px;
+            border-radius: 50%;
+        }
+        .no-followers-found, .no-following-found {
+            text-align: center;
+            color: #666;
+            font-size: 1.2em;
+            margin-top: 20px;
+        }
+        h6 {
+            color: black;
+        }
+        .btn-primary-custom {
+            background-color: #6a11cb;
+            border-color: #6a11cb;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<!-- Navigation Bar -->
+<nav th:replace="~{parts/_header.html :: navbar(${loggedInUser}, ${hasNewNotifications})}"></nav>
+
+<!-- Main Content -->
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <img th:src="@{/img/profilepic.png}" class="profile-profile-pic" alt="Profile Picture">
+                <h2 th:text="${followUser.user.username}">Username</h2>
+                <p class="text-muted" th:text="${followUser.user.id}">ID</p>
+            </div>
+
+            <!-- Followers & Following Tabs -->
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="followers-tab" data-toggle="tab" href="#followers" role="tab" aria-controls="followers" aria-selected="true">Followers</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="following-tab" data-toggle="tab" href="#following" role="tab" aria-controls="following" aria-selected="false">Following</a>
+                </li>
+            </ul>
+            <div class="tab-content" id="myTabContent">
+                <!-- Followers Section -->
+                <div class="tab-pane fade show active" id="followers" role="tabpanel" aria-labelledby="followers-tab">
+                    <div class="profile-section followers-following-list">
+                        <h5>Followers</h5>
+                        <div th:if="${!followUser.followers.isEmpty()}" th:each="follower : ${followUser.followers}">
+                            <div class="follower-item">
+                                <a th:href="@{/user/{id}(id=${follower.id})}" class="d-flex align-items-center">
+                                    <img th:src="@{/img/profilepic.png}" class="mr-3 rounded-circle profile-pic" alt="Follower's profile Picture">
+                                    <h6 class="mt-0 mb-0" th:text="${follower.username}">Username</h6>
+                                </a>
+<!--                                <a th:href="@{/user/{id}(id=${follower.id})}">-->
+<!--                                    <img th:src="@{/img/profilepic.png}" class="profile-pic" alt="Follower Profile Picture">-->
+<!--                                </a>-->
+<!--                                <div>-->
+<!--                                    <a th:href="@{/user/{id}(id=${follower.id})}">-->
+<!--                                        <h6 th:text="${follower.username}">Follower Username</h6>-->
+<!--                                    </a>-->
+<!--                                    <p class="text-muted" th:text="${follower.shortBio}">Short bio about the follower.</p>-->
+<!--                                </div>-->
+                            </div>
+                        </div>
+                        <div th:unless="${!followUser.followers.isEmpty()}" class="no-followers-found" th:text="|No followers found.|"></div>
+                        <div th:if="${!followUser.followers.isEmpty()}">
+                            <form th:action="@{/profile/{id}/followers(id=${followUser.user.getId()})}" method="get">
+                                <input type="hidden" name="size" th:value="${size + 10}"/>
+                                <button type="submit" th:if="${followUser.followers.size() >= size}" class="btn btn-primary-custom btn-block">Load More</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <!-- Following Section -->
+                <div class="tab-pane fade" id="following" role="tabpanel" aria-labelledby="following-tab">
+                    <div class="profile-section followers-following-list">
+                        <h5>Following</h5>
+                        <div th:if="${!followUser.following.isEmpty()}" th:each="following : ${followUser.following}">
+                            <div class="following-item">
+                                <a th:href="@{/user/{id}(id=${following.id})}" class="d-flex align-items-center">
+                                    <img th:src="@{/img/profilepic.png}" class="mr-3 rounded-circle profile-pic" alt="Following Profile Picture">
+                                    <h6 class="mt-0 mb-0" th:text="${following.username}">Following Username</h6>
+                                </a>
+<!--                                <div>-->
+<!--                                    <p class="text-muted" th:text="${following.shortBio}">Short bio about the following user.</p>-->
+<!--                                </div>-->
+                            </div>
+                        </div>
+                        <div th:unless="${!followUser.following.isEmpty()}" class="no-following-found" th:text="|No following found.|"></div>
+                        <div th:if="${!followUser.following.isEmpty()}">
+                            <form th:action="@{/profile/{id}/following(id=${followUser.user.getId()})}" method="get">
+                                <input type="hidden" name="size" th:value="${size + 10}"/>
+                                <button type="submit" th:if="${followUser.following.size() >= size}" class="btn btn-primary-custom btn-block">Load More</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer th:replace="~{parts/_footer.html :: footer}"></footer>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

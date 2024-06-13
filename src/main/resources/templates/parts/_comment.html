@@ -1,0 +1,23 @@
+
+<div class="post mb-3" th:fragment="comment">
+    <div class="card">
+        <div class="post-header d-flex align-items-center">
+            <a th:href="@{/user/{id}(id=${post.user.id})}" class="d-flex align-items-center">
+                <img th:src="@{/img/profilepic.png}" class="mr-3 rounded-circle profile-pic" alt="Profile Picture">
+                <h5 class="mt-0 mb-0" th:text="${comment.user.username}">Username</h5>
+            </a>
+            <span class="timestamp ml-auto" th:text="${#dates.format(comment.comment.timestamp, 'dd MMM yyyy HH:mm')}">So...</span>
+        </div>
+        <div class="card-body">
+            <p class="card-text" th:text="${comment.comment.text}">Lorem Ipsum!</p>
+            <!-- Uncomment if there is a post image -->
+            <!-- <img th:src="@{/img/post_image.png}" class="img-fluid" alt="Post Image"> -->
+        </div>
+<!--        <div class="post-footer d-flex justify-content-start align-items-center">-->
+<!--            <img th:src="@{/img/heart.png}" class="action-icon" alt="Like">-->
+<!--            <span class="like-count" th:text="${post.likeCount}">123</span>-->
+<!--            <img th:src="@{/img/chat-bubble.png}" class="action-icon" alt="Comment">-->
+<!--            <span class="comment-count" th:text="${post.commentCount}">45</span>-->
+<!--        </div>-->
+    </div>
+</div>
