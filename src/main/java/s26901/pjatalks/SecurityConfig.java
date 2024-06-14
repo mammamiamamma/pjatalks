@@ -68,7 +68,7 @@ public class SecurityConfig {
                 .sessionManagement(sessionManagement ->
                         sessionManagement
                                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                                .maximumSessions(1)
+//                                .maximumSessions(1)
                 )
                 .csrf(AbstractHttpConfigurer::disable);
 
