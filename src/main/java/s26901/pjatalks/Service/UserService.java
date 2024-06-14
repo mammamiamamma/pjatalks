@@ -271,11 +271,11 @@ public class UserService implements UserDetailsService {
         );
         Map<String, Integer> suggestionCount = new HashMap<>();
 
-        for (User followingUser : followingUsers) {
-            if (followingUser == null) {
+        for (User fUser : followingUsers) {
+            if (fUser == null) {
                 continue;
             }
-            List<String> followers = followingRepository.getListOfFollowingIds(new ObjectId(followingUser.getId()));
+            List<String> followers = followingRepository.getListOfFollowingIds(new ObjectId(fUser.getId()));
             for (String followerId : followers) {
                 if (followerId == null || followerId.equals(loggedInUser.getId()) || followingIds.contains(followerId)) {
                     continue;
