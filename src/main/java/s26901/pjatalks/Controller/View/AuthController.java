@@ -36,7 +36,7 @@ public class AuthController {
     @GetMapping("/auth")
     public String showLoginForm(Model model) {
         if (isAuthenticated()) {
-            return "redirect:/feed";
+            return "redirect:/logout";
         }
         model.addAttribute("loginInput", new LoginInput());
         model.addAttribute("userInputDto", new UserInputDto());
@@ -95,12 +95,16 @@ public class AuthController {
             return "redirect:/auth";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorRegister", "Registration failed");
+            redirectAttributes.addFlashAttribute("activeTab", "register");
             return "redirect:/auth";
         }
     }
 
     private boolean isAuthenticated() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication != null && authentication.isAuthenticated() && !(authentication.getPrincipal() instanceof String && authentication.getPrincipal().equals("anonymousUser"));
+        return authentication != null
+                && authentication.isAuthenticated()
+                && !(authentication.getPrincipal() instanceof String
+                && authentication.getPrincipal().equals("anonymousUser"));
     }
 }

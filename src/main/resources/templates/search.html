@@ -77,7 +77,7 @@
                         <p th:text="'Posts: ' + ${user.postCount} + ' | Followers: ' + ${user.followerCounter} + ' | Following: ' + ${user.followingCounter}">Posts: 123 | Followers: 456 | Following: 789</p>
                         <p th:text="${user.user.shortBio}">This is a short bio of the user. It provides a brief introduction or some personal information.</p>
                     </div>
-                    <div class="follow-btn-container">
+                    <div class="follow-btn-container" th:if="${loggedInUser != null}">
                         <div th:if="${user.isFollowed==-1}">
                             <form th:action="@{/user/follow}" th:object="${followRequest}" method="post">
                                 <input type="hidden" name="f_follower_id" th:value="${loggedInUser.getId()}"/>

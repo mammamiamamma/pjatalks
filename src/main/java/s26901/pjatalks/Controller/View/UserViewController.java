@@ -1,5 +1,6 @@
 package s26901.pjatalks.Controller.View;
 
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
@@ -180,6 +181,27 @@ public class UserViewController {
                     ("error", e.getMessage());
         }
         return "redirect:" + (referer != null ? referer : "/feed");
+    }
+
+    @PostMapping("/updateBio")
+    public String updateBio(@RequestParam("userId") @ObjectIdValidation String userId,
+                            @RequestParam("shortBio") String shortBio,
+                            RedirectAttributes redirectAttributes) {
+        try {
+            if (shortBio.isEmpty()) throw new IllegalArgumentException("Updated short bio can't be empty");
+            userService.updateShortBio(userId, shortBio.trim());
+        } catch (NoSuchElementException e){
+            redirectAttributes.addFlashAttribute("error", "Error processing request: user with such id not found");
+        } catch (ConstraintViolationException e){
+            redirectAttributes.addFlashAttribute("errorMap", e.getConstraintViolations().stream()
+                    .collect(Collectors.toMap(
+                            violation -> violation.getPropertyPath().toString(),
+                            ConstraintViolation::getMessage
+                    )));
+        } catch (IllegalArgumentException e){
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/user/" + userId;
     }
 
     private void sendNotificationToFollowedUser(String user_id, String target_id){

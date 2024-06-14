@@ -1,5 +1,8 @@
 package s26901.pjatalks.Service;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import org.bson.types.ObjectId;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,8 +26,8 @@ import s26901.pjatalks.Mapper.UserMapper;
 import s26901.pjatalks.Repository.*;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -38,6 +41,7 @@ public class UserService implements UserDetailsService {
     private final CommentRepository commentRepository;
     private final RolesRepository rolesRepository;
     private final NotificationRepository notificationRepository;
+    private final Validator validator;
 
     public UserService(PasswordEncoder passwordEncoder,
                        UserRepository userRepository,
@@ -47,7 +51,7 @@ public class UserService implements UserDetailsService {
                        UserMapper userMapper,
                        PostMapper postMapper,
                        FollowingRepository followingRepository,
-                       RolesRepository rolesRepository, NotificationRepository notificationRepository) {
+                       RolesRepository rolesRepository, NotificationRepository notificationRepository, Validator validator) {
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
         this.postRepository = postRepository;
@@ -58,6 +62,7 @@ public class UserService implements UserDetailsService {
         this.followingRepository = followingRepository;
         this.rolesRepository = rolesRepository;
         this.notificationRepository = notificationRepository;
+        this.validator = validator;
     }
 
 //    public List<User> getAllUsers() {
@@ -137,7 +142,9 @@ public class UserService implements UserDetailsService {
         initialRole.add(new RoleDto("USER"));
         userInputDto.setUserRoles(initialRole);
         userInputDto.setPassword(passwordEncoder.encode(userInputDto.getPassword()));
-        userRepository.insertUser(userMapper.map(userInputDto));
+        User user = userMapper.map(userInputDto);
+        user.setLastCheckedNotifications(Date.from(Instant.now()));
+        userRepository.insertUser(user);
     }
 
 //    public boolean updateLastVisited(String user_id, Date visitedTime){
@@ -151,19 +158,17 @@ public class UserService implements UserDetailsService {
     public boolean addRoleToUser(String user_id, String role_name) throws RoleNotFoundException{
         UserRole userRole = rolesRepository.findByName(role_name);
         if (userRole == null) throw new RoleNotFoundException("No such role found!");
-        Optional<User> user = userRepository.findById(new ObjectId(user_id));
-        if (user.isEmpty()) throw new IllegalArgumentException("No such user found!");
-        user.get().addRole(userRole);
-        return userRepository.updateUser(new ObjectId(user_id), user.get());
+        User user = userRepository.findById(new ObjectId(user_id)).orElseThrow();
+        user.addRole(userRole);
+        return userRepository.updateUser(new ObjectId(user_id), user);
     }
 
     public boolean deleteRoleFromUser(String user_id, String role_name) throws RoleNotFoundException{
         UserRole userRole = rolesRepository.findByName(role_name);
         if (userRole == null) throw new RoleNotFoundException("No such role found!");
-        Optional<User> user = userRepository.findById(new ObjectId(user_id));
-        if (user.isEmpty()) throw new IllegalArgumentException("No such user found!");
-        user.get().deleteRole(userRole);
-        return userRepository.updateUser(new ObjectId(user_id), user.get());
+        User user = userRepository.findById(new ObjectId(user_id)).orElseThrow();
+        user.deleteRoleByName(userRole.getName());
+        return userRepository.updateUser(new ObjectId(user_id), user);
     }
 
     public Optional<UserOutputDto> findByUsername(String username){
@@ -171,24 +176,22 @@ public class UserService implements UserDetailsService {
     }
     @Transactional
     public boolean deleteUser(@ObjectIdValidation String user_id) throws NotAcknowledgedException {
-//        if (!ObjectId.isValid(user_id)) {
-//            throw new IllegalArgumentException("Invalid ObjectId: " + user_id);
-//        }
-        //here should be other services to make a cascade deletion
-        if (!postRepository.deletePostsByUserId(new ObjectId(user_id)))
-            throw new NotAcknowledgedException("Deletion from 'posts' not acknowledged by database");
-        if (!likeRepository.deleteAllLikesByUser(new ObjectId(user_id)))
-            throw new NotAcknowledgedException("Deletion from 'likes' not acknowledged by database");
         if (!commentRepository.deleteCommentsByUser(new ObjectId(user_id)))
             throw new NotAcknowledgedException("Deletion from 'likes' not acknowledged by database");
         if (!followingRepository.deleteAllFollowersForUser(new ObjectId(user_id)))
             throw new NotAcknowledgedException("Deletion from 'followers' not acknowledged by database");
         if (!followingRepository.deleteAllFollowingForUser(new ObjectId(user_id)))
             throw new NotAcknowledgedException("Deletion from 'following' not acknowledged by database");
+        if (!likeRepository.deleteAllLikesByUser(new ObjectId(user_id)))
+            throw new NotAcknowledgedException("Deletion from 'likes' not acknowledged by database");
+        if (!notificationRepository.deleteNotificationsOfUser(new ObjectId(user_id)))
+            throw new NotAcknowledgedException("Deletion from 'notifications' not acknowledged by database");
+        if (!notificationRepository.deleteNotificationsByUser(new ObjectId(user_id)))
+            throw new NotAcknowledgedException("Deletion from 'notifications' not acknowledged by database");
         return userRepository.deleteUser(new ObjectId(user_id));
     }
 
-    @Transactional //does it need to be?
+    @Transactional
     public boolean updateUser(String id, User updatedUser) {
 //        if (!ObjectId.isValid(id)) {
 //            throw new IllegalArgumentException("Invalid ObjectId: " + id);
@@ -222,6 +225,15 @@ public class UserService implements UserDetailsService {
         return userRepository.updateUser(new ObjectId(id), existingUser);
     }
 
+    @Transactional
+    public void updateShortBio(String userId, String shortBio) throws ConstraintViolationException, NoSuchElementException {
+        User user = userRepository.findById(new ObjectId(userId)).orElseThrow();
+        user.setShortBio(shortBio);
+        Set<ConstraintViolation<User>> errors = validator.validateProperty(user, "shortBio");
+        if (!errors.isEmpty()) throw new ConstraintViolationException(errors);
+        userRepository.updateUser(new ObjectId(userId), user);
+    }
+
     public void updateLastCheckedNotifications(String userId) {
         Optional<User> userOpt = userRepository.findById(new ObjectId(userId));
         if (userOpt.isPresent()) {
@@ -231,7 +243,7 @@ public class UserService implements UserDetailsService {
         }
     }
 
-    public boolean hasNewNotifications(String userId) {
+    public boolean hasNewNotifications(String userId) { //move to notifications?
         Optional<User> userOpt = userRepository.findById(new ObjectId(userId));
         if (userOpt.isPresent()) {
             User user = userOpt.get();
@@ -239,6 +251,50 @@ public class UserService implements UserDetailsService {
             return notificationRepository.existsByUserIdAndTimestampAfter(new ObjectId(userId), lastChecked);
         }
         return false;
+    }
+
+    public List<UserOutputDto> findTop3SuggestedUsers(String id){
+        Optional<User> loggedInUserOpt = userRepository.findById(new ObjectId(id));
+        if (loggedInUserOpt.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        User loggedInUser = loggedInUserOpt.get();
+        List<String> followingIds = followingRepository.getListOfFollowingIds(new ObjectId(loggedInUser.getId()));
+
+        if (followingIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<User> followingUsers = userRepository.findUsers(
+                followingIds.stream().map(ObjectId::new).collect(Collectors.toList())
+        );
+        Map<String, Integer> suggestionCount = new HashMap<>();
+
+        for (User followingUser : followingUsers) {
+            for (String followerId : followingRepository.getListOfFollowingIds(new ObjectId(followingUser.getId()))) {
+                if (!followerId.equals(loggedInUser.getId()) && !followingIds.contains(followerId)) {
+                    suggestionCount.put(followerId, suggestionCount.getOrDefault(followerId, 0) + 1);
+                }
+            }
+        }
+
+        List<Map.Entry<String, Integer>> sortedSuggestions = suggestionCount.entrySet()
+                .stream()
+                .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
+                .toList();
+
+        List<String> top3SuggestedUserIds = sortedSuggestions.stream()
+                .limit(3)
+                .map(Map.Entry::getKey)
+                .toList();
+
+        return userRepository.findUsers(top3SuggestedUserIds
+                        .stream().map(ObjectId::new)
+                        .collect(Collectors.toList())
+                )
+                .stream().map(userMapper::map)
+                .toList();
     }
 
     public List<String> getFollowedUserIds(String id) {

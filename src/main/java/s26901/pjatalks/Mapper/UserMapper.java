@@ -28,6 +28,6 @@ public class UserMapper {
                 user.getId(),
                 user.getUsername(),
                 user.getShortBio(), //check for isBlank?
-                user.getLastCheckedNotifications(), roleMapper.mapEnt(user.getRoles()));
+                roleMapper.mapEnt(user.getRoles()));
     }
 }

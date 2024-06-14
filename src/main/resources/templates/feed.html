@@ -21,6 +21,7 @@
             background: linear-gradient(to right, #6a11cb, #2575fc);
         }
         .profile-pic {
+            flex-shrink: 0;
             width: 45px;
             height: 45px;
         }
@@ -89,16 +90,21 @@
             color: white;
             margin-bottom: 20px;
         }
-        .alert {
-            padding: 0.75rem 1.25rem;
-            margin-bottom: 1rem;
-            border: 1px solid transparent;
-            border-radius: 0.25rem;
+        .username {
+            flex-grow: 1;
+            margin-right: 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-        .alert-danger {
-            color: #721c24;
-            background-color: #f8d7da;
-            border-color: #f5c6cb;
+        .follow-button {
+            background-color: #f9f9f9;
+            flex-shrink: 0;
+        }
+        .list-group-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
     </style>
 </head>
@@ -115,7 +121,7 @@
             <h1 th:unless="${personalized}" class="feed-title">Feed</h1>
             <!-- Create Post Section -->
             <p class="alert alert-danger" th:if="${errorValid != null}" th:text="${errorValid}"></p>
-            <div class="create-post">
+            <div class="create-post" th:if="${loggedInUser != null}">
                 <div class="d-flex align-items-center">
                     <img th:src="@{/img/profilepic.png}" class="mr-3 rounded-circle header-profile-pic" alt="Profile Picture">
                     <h5 class="mt-0 mb-0">What's on your mind?</h5>
@@ -147,10 +153,18 @@
                     <div th:replace="~{parts/_post.html :: post(${true})}"></div>
                 </div>
             </div>
-            <div class="load-more-container">
+            <div th:if="${personalized}" class="load-more-container">
+                <form th:action="@{/feed/personalized}" method="get">
+                    <input type="hidden" name="size" th:value="${size + 5}"/>
+                    <input type="hidden" name="page" th:value="${page}"/>
+                    <button type="submit" class="load-more-btn" th:if="${postPage.hasNext()}">Load More Posts</button>
+                </form>
+            </div>
+            <div th:unless="${personalized}" class="load-more-container">
                 <form th:action="@{/feed}" method="get">
-                    <input type="hidden" name="size" th:value="${postPage.size+1}"/>
-                    <button type="submit" class="load-more-btn" th:if="${postPage.hasNext()}">Load Posts</button>
+                    <input type="hidden" name="size" th:value="${size + 5}"/>
+                    <input type="hidden" name="page" th:value="${page}"/>
+                    <button type="submit" class="load-more-btn" th:if="${postPage.hasNext()}">Load More Posts</button>
                 </form>
             </div>
         </div>
@@ -159,11 +173,11 @@
             <div class="card mb-3">
                 <div class="card-body">
                     <h5 class="card-title">Trending Topics</h5>
-                    <ul class="list-group list-group-flush">
-                        <li th:if="${topHash == null || topHash.isEmpty()}" class="list-group-item">
-                            <span>No topics trending for today, come back tomorrow!</span>
-                        </li>
-                        <li th:each="trendingHash : ${topHash}" th:if="${topHash != null && !topHash.isEmpty()}" class="list-group-item d-flex justify-content-between align-items-center">
+                    <ul th:if="${topHash == null || topHash.isEmpty()}" class="list-group list-group-flush">
+                        No topics trending for today, come back tomorrow!
+                    </ul>
+                    <ul th:if="${topHash != null && !topHash.isEmpty()}" class="list-group list-group-flush">
+                        <li th:each="trendingHash : ${topHash}" class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
                                 <img th:src="@{/img/hashtag.png}" class="icon" alt="Hashtag Icon">
                                 <span th:text="${trendingHash.id}" style="font-weight: bold;"></span>
@@ -173,19 +187,18 @@
                     </ul>
                 </div>
             </div>
-            <div class="card">
+            <div th:if="${suggestedUsers != null}" class="card">
                 <div class="card-body">
                     <h5 class="card-title">Suggested Users</h5>
-                    <ul class="list-group list-group-flush">
+                    <ul th:if="${!suggestedUsers.isEmpty()}" th:each="suggestedUser : ${suggestedUsers}" class="list-group list-group-flush">
                         <li class="list-group-item">
                             <img th:src="@{/img/profilepic.png}" class="mr-3 rounded-circle profile-pic" alt="Profile Picture">
-                            User 1 <button class="btn btn-primary btn-sm float-right">Follow</button>
+                            <span class="username" th:text="${suggestedUser.username}"></span>
+                            <a class="btn btn-outline-secondary btn-sm follow-button" th:href="@{/user/{id}(id=${suggestedUser.id})}">View</a>
                         </li>
-                        <li class="list-group-item">
-                            <img th:src="@{/img/profilepic.png}" class="mr-3 rounded-circle profile-pic" alt="Profile Picture">
-                            User 2 <button class="btn btn-primary btn-sm float-right">Follow</button>
-                        </li>
-                        <!-- Add more users as needed -->
+                    </ul>
+                    <ul th:if="${suggestedUsers.isEmpty()}" class="list-group list-group-flush">
+                        No suggestions right now, check in later!
                     </ul>
                 </div>
             </div>
@@ -196,6 +209,7 @@
 <!-- Footer -->
 <footer th:replace="~{parts/_footer.html :: footer}"></footer>
 <th:insert th:replace="~{parts/_post.html :: postScripts}"></th:insert>
+<th:insert th:replace="~{parts/_header.html :: navScripts}"></th:insert>
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

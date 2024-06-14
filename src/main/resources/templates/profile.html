@@ -60,6 +60,20 @@
             font-size: 1.2em;
             margin-top: 20px;
         }
+        /*.edit-bio-container {*/
+        /*    display: flex;*/
+        /*    flex-direction: column;*/
+        /*    align-items: center;*/
+        /*}*/
+        .edit-bio-container {
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            width: 100%;
+        }
+        textarea.form-control {
+            width: 100%;
+        }
         h5 {
             color: black; /* Set the text color to black */
         }
@@ -75,6 +89,17 @@
             padding: 6px 12px;
             font-size: 14px;
         }
+        .alert {
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+        }
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
     </style>
 </head>
 <body>
@@ -87,6 +112,28 @@
         <div class="col-md-8 offset-md-2">
             <!-- Profile Header -->
             <div class="profile-header text-center">
+                <div class="ml-auto d-flex align-items-center">
+                    <div th:if="${#authorization.expression('hasAnyAuthority(''ADMIN'', ''OWNER'')')}">
+                        <form th:action="@{/admin/banUser}" method="post" class="ml-2">
+                            <input type="hidden" name="user_id" th:value="${user.user.id}"/>
+                            <button type="submit" class="btn btn-danger btn-sm">Delete User</button>
+                        </form>
+                    </div>
+                    <div th:if="${#authorization.expression('hasAuthority(''OWNER'')') && user.user.getRoleNames().contains('ADMIN')}">
+                        <form th:action="@{/admin/deleteRole}" method="post" class="ml-2">
+                            <input type="hidden" name="user_id" th:value="${user.user.id}"/>
+                            <input type="hidden" name="role_name" th:value="ADMIN"/>
+                            <button type="submit" class="btn btn-danger btn-sm">DELETE ADMIN ROLE</button>
+                        </form>
+                    </div>
+                    <div th:if="${#authorization.expression('hasAuthority(''OWNER'')') && !user.user.getRoleNames().contains('ADMIN')}">
+                        <form th:action="@{/admin/assignRole}" method="post" class="ml-2">
+                            <input type="hidden" name="user_id" th:value="${user.user.id}"/>
+                            <input type="hidden" name="role_name" th:value="ADMIN"/>
+                            <button type="submit" class="btn btn-danger btn-sm">ASSIGN ADMIN ROLE</button>
+                        </form>
+                    </div>
+                </div>
                 <img th:src="@{/img/profilepic.png}" class="profile-profile-pic" alt="Profile Picture">
                 <h2 th:text="${user.user.getUsername()}">Username</h2>
                 <p class="text-muted" th:text="${user.user.getId()}">ID</p>
@@ -118,8 +165,22 @@
                     </div>
                 </div>
                 <div class="profile-section short-bio-box">
+                    <p class="alert alert-danger" th:if="${errorMap!=null && errorMap.containsKey('shortBio')}" th:text="${errorMap['shortBio']}"></p>
+                    <p class="alert alert-danger" th:if="${error!=null}" th:text="${error}"></p>
                     <h5>Short bio:</h5>
                     <p th:if="${user.user.getShortBio() != null && !user.user.getShortBio().isEmpty()}" th:text="${user.user.getShortBio()}">Short bio about the user.</p>
+                    <p th:if="${user.user.getShortBio() == null || user.user.getShortBio().isEmpty()}">No bio available.</p>
+                    <div th:if="${loggedInUser!=null && (loggedInUser.id == user.user.id || #authorization.expression('hasAnyAuthority(''ADMIN'', ''OWNER'')'))}" class="edit-bio-container">
+                        <button id="edit-bio-btn" class="btn btn-outline-secondary btn-sm mt-2">Edit Bio</button>
+                        <form id="edit-bio-form" th:action="@{/user/updateBio}" method="post" class="mt-2 edit-bio-container" style="display:none;">
+                            <input type="hidden" name="userId" th:value="${user.user.getId()}"/>
+                            <div class="form-group">
+                                <textarea class="form-control" name="shortBio" rows="3" placeholder="Enter your new bio"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                            <button type="button" id="cancel-edit-bio-btn" class="btn btn-secondary btn-sm">Cancel</button>
+                        </form>
+                    </div>
                 </div>
             </div>
 
@@ -142,12 +203,25 @@
 </div>
 
 <!-- Footer -->
-<footer class="footer mt-auto py-3 bg-light">
-    <div class="container">
-        <span class="text-muted">© 2024 PJATalK. All rights reserved.</span>
-    </div>
-</footer>
+<footer th:replace="~{parts/_footer.html :: footer}"></footer>
 <th:insert th:replace="~{parts/_post.html :: postScripts}"></th:insert>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const editBioBtn = document.getElementById('edit-bio-btn');
+        const editBioForm = document.getElementById('edit-bio-form');
+        const cancelEditBioBtn = document.getElementById('cancel-edit-bio-btn');
+
+        editBioBtn.addEventListener('click', function() {
+            editBioForm.style.display = 'block';
+            editBioBtn.style.display = 'none';
+        });
+
+        cancelEditBioBtn.addEventListener('click', function() {
+            editBioForm.style.display = 'none';
+            editBioBtn.style.display = 'block';
+        });
+    });
+</script>
 <!--<script>-->
 <!--    document.addEventListener('DOMContentLoaded', function() {-->
 <!--        document.querySelectorAll('.like-form').forEach(function(form) {-->

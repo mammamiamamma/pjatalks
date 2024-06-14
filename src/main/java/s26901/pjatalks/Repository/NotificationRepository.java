@@ -7,13 +7,10 @@ import com.mongodb.client.result.InsertOneResult;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 import s26901.pjatalks.Entity.Notification;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Repository
@@ -25,16 +22,10 @@ public class NotificationRepository {
     }
 
     public void deleteOutdatedNotifications() {
-        // Calculate the cutoff time (current time minus 1 day)
         Instant cutoffTime = Instant.now().minusSeconds(86400); // 86400 seconds in a day
         Date cutoffDate = Date.from(cutoffTime);
-
-        // Construct the query to find notifications older than the cutoff time
         Document query = new Document("timestamp", new Document("$lt", cutoffDate));
-
-        // Delete the matching documents
         DeleteResult result = collection.deleteMany(query);
-
         System.out.println("Deleted " + result.getDeletedCount() + " outdated notifications.");
     }
 
@@ -78,6 +69,11 @@ public class NotificationRepository {
         return result.wasAcknowledged();
     }
 
+    public boolean deleteNotificationsByUser(ObjectId user_id){
+        DeleteResult result = collection.deleteMany(new Document("causer_id", user_id));
+        return result.wasAcknowledged();
+    }
+
     public boolean deleteNotification(ObjectId id){
         DeleteResult result = collection.deleteOne(new Document("_id", id));
         return result.getDeletedCount() != 0;
@@ -94,32 +90,12 @@ public class NotificationRepository {
         System.out.println("Count: " + count);
         return count > 0;
     }
-
-    public boolean existsByUserIdPostIdAndType(ObjectId user_id, ObjectId post_id, String type){
-        Document query = new Document("user_id", user_id)
-                .append("post_id", post_id)
-                .append("type", type);
-        return collection.countDocuments(query)>0;
-    }
-
     public boolean existsByUserIdCauserIdAndType(ObjectId user_id, ObjectId causer_id, String type){
         Document query = new Document("user_id", user_id)
                 .append("causer_id", causer_id)
                 .append("type", type);
         return collection.countDocuments(query)>0;
     }
-
-    public Notification findByUserIdPostIdAndType(ObjectId user_id, ObjectId post_id, String type){
-        Document query = new Document("user_id", user_id)
-                .append("post_id", post_id)
-                .append("type", type);
-        Document doc = collection.find(query).first();
-        if (doc != null){
-            return documentToNotification(doc);
-        }
-        return null;
-    }
-
     public Notification findByUserIdCauserIdAndType(ObjectId user_id, ObjectId causer_id, String type){
         Document query = new Document("user_id", user_id)
                 .append("causer_id", causer_id)

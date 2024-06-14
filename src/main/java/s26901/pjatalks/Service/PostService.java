@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class PostService {
@@ -47,33 +48,35 @@ public class PostService {
         this.commentRepository = commentRepository;
         this.validator = validator;
     }
-    public Page<PostViewDto> getViewPostDtos(int page, int size) {
+    public Page<PostViewDto> getViewPostDtos(int page, int size, UserOutputDto userOutputDto) {
         PageRequest pageRequest = PageRequest.of(page, size);
         Page<Post> postPage = postRepository.findAll(pageRequest); //need that
         List<Post> posts = postPage.getContent();
         List<PostViewDto> postDTOs = new ArrayList<>();
 
         for (Post post : posts) {
-            postDTOs.add(getViewFromPost(post));
+            postDTOs.add(getViewFromPost(post, userOutputDto));
         }
 
         return new PageImpl<>(postDTOs, pageRequest, postPage.getTotalElements());
     }
 
-    private PostViewDto getViewFromPost(Post post){
-        Optional<User> user = userRepository.findById(new ObjectId(post.getUser_id()));
-        UserOutputDto userOutput;
+    private PostViewDto getViewFromPost(Post post, UserOutputDto userOutputDto){
+        User user = userRepository.findById(new ObjectId(post.getUser_id())).orElse(null);
+        UserOutputDto userFromPostDto;
         boolean isAlreadyLiked = false;
-        if (user.isPresent()){
-            userOutput = userMapper.map(user.get());
-            isAlreadyLiked = likeRepository.isAlreadyLiked(new ObjectId(userOutput.getId()), new ObjectId(post.getId()));
+        if (userOutputDto != null){
+//            userOutput = userMapper.map(user.get());
+            isAlreadyLiked = likeRepository.isAlreadyLiked(new ObjectId(userOutputDto.getId()), new ObjectId(post.getId()));
+        } if (user != null){
+            userFromPostDto = userMapper.map(user);
         } else {
-            userOutput = new UserOutputDto();
-            userOutput.setUsername("Anon");
+            userFromPostDto = new UserOutputDto();
+            userFromPostDto.setUsername("Anon");
         }
         long likeCount = likeRepository.countLikesByPostId(new ObjectId(post.getId()));
         long commentCount = commentRepository.countCommentsByPost(new ObjectId(post.getId()));
-        return new PostViewDto(post.getId(), postMapper.map(post), userOutput, likeCount, commentCount, isAlreadyLiked);
+        return new PostViewDto(post.getId(), postMapper.map(post), userFromPostDto, likeCount, commentCount, isAlreadyLiked);
     }
     public List<PostOutputDto> getPostsByUserId(String id){
         return postRepository.findByUserId(new ObjectId(id)).stream().map(postMapper::map).toList();
@@ -84,11 +87,11 @@ public class PostService {
         return post.map(postMapper::map).orElse(null);
     }
 
-    public PostViewDto getPostByIdView(String id){
+    public PostViewDto getPostByIdView(String id, UserOutputDto userOutputDto){
         Optional<Post> postOpt = postRepository.findById(new ObjectId(id));
         if (postOpt.isPresent()){
             Post post = postOpt.get();
-            return getViewFromPost(post);
+            return getViewFromPost(post, userOutputDto);
         } else return null;
     }
 
@@ -119,32 +122,34 @@ public class PostService {
     }
 
     @Transactional
-    public boolean deletePostsByUserId(String user_id){
-        if (userRepository.findById(new ObjectId(user_id)).isEmpty())
-            throw new IllegalArgumentException("Invalid author's user_id");
-        return postRepository.deletePostsByUserId(new ObjectId(user_id));
+    public void deletePostsByUserId(String user_id) throws NotAcknowledgedException {
+        List<Post> postsForDeletion = postRepository.findByUserId(new ObjectId(user_id));
+        for (Post post : postsForDeletion){
+            commentRepository.deleteCommentsOfPost(new ObjectId(post.getId()));
+            likeRepository.deleteAllLikesByPost(new ObjectId(post.getId()));
+            postRepository.deletePost(new ObjectId(post.getId()));
+        }
     }
 
     @Transactional
     public boolean deletePost(String post_id) throws NotAcknowledgedException {
         if (!likeRepository.deleteAllLikesByPost(new ObjectId(post_id)))
             throw new NotAcknowledgedException("Deletion from 'likes' not acknowledged by database");
+        if (!commentRepository.deleteCommentsOfPost(new ObjectId(post_id)))
+            throw new NotAcknowledgedException("Deletion from 'likes' not acknowledged by database");
         return postRepository.deletePost(new ObjectId(post_id));
     }
 
-    public Page<PostViewDto> getPostsByUserIds(List<String> followedUserIds, int page, int size) {
+    public Page<PostViewDto> getPostsByUserIds(List<String> followedUserIds, int page, int size, UserOutputDto userOutputDto) {
         PageRequest pageRequest = PageRequest.of(page, size);
-        List<ObjectId> idToObjectIds = new ArrayList<>();
-        followedUserIds.forEach(s -> {
-            idToObjectIds.add(new ObjectId(s));
-        });
-        Page<Post> postPage = postRepository.findByUserIds(idToObjectIds, pageRequest); //need that
+        List<ObjectId> idToObjectIds = followedUserIds.stream()
+                .map(ObjectId::new)
+                .collect(Collectors.toList());
+        Page<Post> postPage = postRepository.findByUserIds(idToObjectIds, pageRequest);
         List<Post> posts = postPage.getContent();
-        List<PostViewDto> postDTOs = new ArrayList<>();
-
-        for (Post post : posts) {
-            postDTOs.add(getViewFromPost(post));
-        }
+        List<PostViewDto> postDTOs = posts.stream()
+                .map(post -> getViewFromPost(post, userOutputDto))
+                .collect(Collectors.toList());
 
         return new PageImpl<>(postDTOs, pageRequest, postPage.getTotalElements());
     }

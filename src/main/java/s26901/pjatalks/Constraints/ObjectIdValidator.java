@@ -9,7 +9,6 @@ public class ObjectIdValidator implements ConstraintValidator<ObjectIdValidation
     public void initialize(ObjectIdValidation constraintAnnotation) {
         ConstraintValidator.super.initialize(constraintAnnotation);
     }
-
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
         return ObjectId.isValid(value);

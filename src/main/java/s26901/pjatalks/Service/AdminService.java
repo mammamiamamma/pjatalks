@@ -1,6 +1,5 @@
 package s26901.pjatalks.Service;
 
-import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
 import s26901.pjatalks.DTO.Output.UserOutputDto;
 import s26901.pjatalks.Entity.User;
@@ -8,7 +7,6 @@ import s26901.pjatalks.Mapper.UserMapper;
 import s26901.pjatalks.Repository.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class AdminService {

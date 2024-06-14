@@ -77,7 +77,7 @@
             <!-- Comments Section -->
             <div class="comments-section">
                 <h5>Comments</h5>
-                <div class="create-post">
+                <div th:if="${loggedInUser != null}" class="create-post">
                     <div class="d-flex align-items-center">
                         <img th:src="@{/img/profilepic.png}" class="mr-3 rounded-circle header-profile-pic" alt="Profile Picture">
                         <h5 class="mt-0 mb-0">Add a comment</h5>

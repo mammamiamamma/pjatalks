@@ -2,6 +2,7 @@ package s26901.pjatalks.Entity;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -12,7 +13,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
@@ -33,8 +33,7 @@ public class User implements UserDetails {
     @NotBlank(message = "Email address is mandatory")
     @Email(message = "Invalid email format")
     private String emailAddress;
-    @DBRef
-    @Length(max = 330, message = "Short bio must be less than 330 characters")
+    @Size(max = 330, message = "Short bio must be less than 330 characters")
     private String shortBio;
     @DBRef
     private Set<UserRole> roles;
@@ -137,8 +136,8 @@ public class User implements UserDetails {
         roles.add(userRole);
     }
 
-    public void deleteRole(UserRole userRole){
-        roles.remove(userRole);
+    public void deleteRoleByName(String roleName) {
+        roles.removeIf(role -> role.getName().equals(roleName));
     }
 
     public void setRoles(Set<UserRole> roles) {

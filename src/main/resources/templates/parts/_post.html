@@ -65,7 +65,7 @@
                 <span class="comment-count ml-2" th:text="${post.commentCount}"></span>
             </div>
             <div class="ml-auto d-flex align-items-center">
-                <div th:if="${#authorization.expression('hasAuthority(''ADMIN'')')}">
+                <div th:if="${#authorization.expression('hasAnyAuthority(''ADMIN'', ''OWNER'')')}">
                     <form th:action="@{/admin/deletePost}" method="post" class="ml-2">
                         <input type="hidden" name="postId" th:value="${post.post_id}"/>
                         <button type="submit" class="btn btn-danger btn-sm">Delete</button>

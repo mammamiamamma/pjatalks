@@ -14,7 +14,6 @@ public class StringToDateConverter implements Converter<String, Date> {
     @Override
     public Date convert(@NonNull String source) {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        //maybe change later to remove seconds?
         try {
             return formatter.parse(source);
         } catch (ParseException e) {

@@ -3,14 +3,16 @@ package s26901.pjatalks.Controller.View;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import s26901.pjatalks.Constraints.ObjectIdValidation;
 import s26901.pjatalks.DTO.Output.UserOutputDto;
 import s26901.pjatalks.Exception.NotAcknowledgedException;
 import s26901.pjatalks.Service.AdminService;
 import s26901.pjatalks.Service.PostService;
 import s26901.pjatalks.Service.UserService;
 
-import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @Controller
 @RequestMapping("/admin")
@@ -55,11 +57,38 @@ public class AdminController {
         return "redirect:" + (referer != null ? referer : "/admin/dashboard");
     }
 
+    @PostMapping("/assignRole")
+    public String giveRoleToUser(@RequestParam @ObjectIdValidation String user_id,
+                                 @RequestParam String role_name, RedirectAttributes redirectAttributes){
+        try {
+            userService.addRoleToUser(user_id, role_name);
+        } catch (NoSuchElementException e){
+            redirectAttributes.addFlashAttribute("error", "Error processing request: no user with such id found!");
+        } catch (IllegalArgumentException e){
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/user/"+user_id;
+    }
+
+    @PostMapping("/deleteRole")
+    public String deleteRoleFromUser(@RequestParam @ObjectIdValidation String user_id,
+                                 @RequestParam String role_name, RedirectAttributes redirectAttributes){
+        try {
+            userService.deleteRoleFromUser(user_id, role_name);
+        } catch (NoSuchElementException e){
+            redirectAttributes.addFlashAttribute("error", "Error processing request: no user with such id found!");
+        } catch (IllegalArgumentException e){
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/user/"+user_id;
+    }
+
     @PostMapping("/banUser")
-    public String banUser(@RequestParam String userId,
+    public String banUser(@RequestParam String user_id,
                           @RequestHeader(value = "Referer", required = false) String referer) {
         try {
-            userService.deleteUser(userId);
+            postService.deletePostsByUserId(user_id);
+            userService.deleteUser(user_id);
         } catch (NotAcknowledgedException e) {
             throw new RuntimeException(e);
         }

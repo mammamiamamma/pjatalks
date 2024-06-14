@@ -5,15 +5,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import s26901.pjatalks.DTO.General.NotificationDto;
 import s26901.pjatalks.DTO.Output.NotificationOutputDto;
+import s26901.pjatalks.DTO.Output.UserOutputDto;
 import s26901.pjatalks.DTO.View.NotificationViewDto;
 import s26901.pjatalks.Entity.Notification;
-import s26901.pjatalks.Entity.TrendingHashtags;
 import s26901.pjatalks.Entity.User;
 import s26901.pjatalks.Mapper.NotificationMapper;
 import s26901.pjatalks.Mapper.UserMapper;
 import s26901.pjatalks.Repository.NotificationRepository;
 import s26901.pjatalks.Repository.UserRepository;
-import s26901.pjatalks.SupportEntities.HashtagCount;
 
 import java.util.*;
 
@@ -55,10 +54,19 @@ public class NotificationService {
             notifViewDto.setIcon(getIconFromType(notif.getType()));
             Optional<User> userOptional = userRepository.findById(new ObjectId(notif.getCauser_id()));
             if (userOptional.isPresent()) notifViewDto.setCauser(userMapper.map(userOptional.get()));
-            else throw new IllegalArgumentException("Not causer with such id found!");
+            else {
+                notifViewDto.setCauser(generateDeletedUserDetails());
+//                throw new IllegalArgumentException("Not causer with such id found!");
+            }
             resultList.add(notifViewDto);
         }
         return resultList;
+    }
+
+    private UserOutputDto generateDeletedUserDetails(){
+        UserOutputDto userOutputDto = new UserOutputDto();
+        userOutputDto.setUsername("DeletedUser");
+        return userOutputDto;
     }
 
     private String getIconFromType(String type){
@@ -91,39 +99,39 @@ public class NotificationService {
             notificationRepository.insertNotification(notificationMapper.map(notificationDto));
     }
 
-    public void addPostNotification(NotificationDto notificationDto, String post_id){
-        if (!notificationRepository.existsByUserIdPostIdAndType(
-                new ObjectId(notificationDto.getUser_id()),
-                new ObjectId(post_id),
-                notificationDto.getType()))
-            notificationRepository.insertNotification(notificationMapper.map(notificationDto));
-    }
+//    public void addPostNotification(NotificationDto notificationDto, String post_id){
+//        if (!notificationRepository.existsByUserIdPostIdAndType(
+//                new ObjectId(notificationDto.getUser_id()),
+//                new ObjectId(post_id),
+//                notificationDto.getType()))
+//            notificationRepository.insertNotification(notificationMapper.map(notificationDto));
+//    }
 
-    public void deletePostNotification(NotificationDto notificationDto, String post_id){
-        if (notificationRepository.existsByUserIdPostIdAndType(
-                new ObjectId(notificationDto.getUser_id()),
-                new ObjectId(post_id),
-                notificationDto.getType())) {
-            Notification notif = notificationRepository.findByUserIdPostIdAndType(
-                    new ObjectId(notificationDto.getUser_id()),
-                    new ObjectId(post_id),
-                    notificationDto.getType());
-            notificationRepository.deleteNotification(new ObjectId(notif.getId()));
-        }
-    }
+//    public void deletePostNotification(NotificationDto notificationDto, String post_id){
+//        if (notificationRepository.existsByUserIdPostIdAndType(
+//                new ObjectId(notificationDto.getUser_id()),
+//                new ObjectId(post_id),
+//                notificationDto.getType())) {
+//            Notification notif = notificationRepository.findByUserIdPostIdAndType(
+//                    new ObjectId(notificationDto.getUser_id()),
+//                    new ObjectId(post_id),
+//                    notificationDto.getType());
+//            notificationRepository.deleteNotification(new ObjectId(notif.getId()));
+//        }
+//    }
 
-    public void deleteUserNotification(NotificationDto notificationDto){
-        if (notificationRepository.existsByUserIdCauserIdAndType(
-                new ObjectId(notificationDto.getUser_id()),
-                new ObjectId(notificationDto.getCauser_id()),
-                notificationDto.getType())) {
-            Notification notif = notificationRepository.findByUserIdCauserIdAndType(
-                    new ObjectId(notificationDto.getUser_id()),
-                    new ObjectId(notificationDto.getCauser_id()),
-                    notificationDto.getType());
-            notificationRepository.deleteNotification(new ObjectId(notif.getId()));
-        }
-    }
+//    public void deleteUserNotification(NotificationDto notificationDto){
+//        if (notificationRepository.existsByUserIdCauserIdAndType(
+//                new ObjectId(notificationDto.getUser_id()),
+//                new ObjectId(notificationDto.getCauser_id()),
+//                notificationDto.getType())) {
+//            Notification notif = notificationRepository.findByUserIdCauserIdAndType(
+//                    new ObjectId(notificationDto.getUser_id()),
+//                    new ObjectId(notificationDto.getCauser_id()),
+//                    notificationDto.getType());
+//            notificationRepository.deleteNotification(new ObjectId(notif.getId()));
+//        }
+//    }
 
     public boolean deleteNotificationsOfUser(String user_id){
         return notificationRepository.deleteNotificationsOfUser(new ObjectId(user_id));

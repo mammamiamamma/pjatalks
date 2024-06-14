@@ -32,17 +32,18 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers("/admin**").hasRole("ADMIN")
+                                .requestMatchers("/admin**").hasAnyRole("ADMIN", "OWNER")
                                 .requestMatchers(
-                                        "/images/**",
+//                                        "/images/**",
                                         "/img/**",
                                         "/register",
                                         "/api/**",
                                         "/login**",
-                                        "/css/**",
-                                        "/js/**",
+//                                        "/css/**",
+//                                        "/js/**",
                                         "/auth/**",
-                                        "/feed").permitAll()
+                                        "/feed"
+                                ).permitAll()
                                 .anyRequest().authenticated()
                 )
                 .formLogin(formLogin ->
@@ -67,6 +68,7 @@ public class SecurityConfig {
                 .sessionManagement(sessionManagement ->
                         sessionManagement
                                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                                .maximumSessions(1)
                 )
                 .csrf(AbstractHttpConfigurer::disable);
 

@@ -2,8 +2,6 @@ package s26901.pjatalks.DTO.Output;
 
 import s26901.pjatalks.DTO.Input.RoleDto;
 
-import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -11,17 +9,15 @@ public class UserOutputDto {
     private String id;
     private String username;
     private String shortBio;
-    private Date LastCheckedNotifications; //up for removal
     private Set<RoleDto> userRoles;
 
     public UserOutputDto() {
     }
 
-    public UserOutputDto(String id, String username, String shortBio, Date lastCheckedNotifications, Set<RoleDto> userRoles) {
+    public UserOutputDto(String id, String username, String shortBio, Set<RoleDto> userRoles) {
         this.id = id;
         this.username = username;
         this.shortBio = shortBio;
-        this.LastCheckedNotifications = lastCheckedNotifications;
         this.userRoles = userRoles;
     }
 
@@ -57,13 +53,6 @@ public class UserOutputDto {
         this.userRoles = userRoles;
     }
 
-    public Date getLastCheckedNotifications() {
-        return LastCheckedNotifications;
-    }
-
-    public void setLastCheckedNotifications(Date lastCheckedNotifications) {
-        LastCheckedNotifications = lastCheckedNotifications;
-    }
     public Set<String> getRoleNames() {
         return userRoles.stream()
                 .map(RoleDto::getName) // Assuming RoleDto has a getName() method

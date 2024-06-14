@@ -1,6 +1,5 @@
 package s26901.pjatalks.Repository;
 
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.Accumulators;
@@ -10,7 +9,6 @@ import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertOneResult;
 import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -92,24 +90,26 @@ public class PostRepository {
 
     public Page<Post> findByUserIds(List<ObjectId> userIds, PageRequest request) {
         List<Post> resultList = new ArrayList<>();
-        for (ObjectId id : userIds) {
-            try (MongoCursor<Document> postsByUser = collection
-                    .find(new Document("user_id", id))
-                    .sort(Sorts.descending("timestamp"))
-                    .skip(0)
-                    .limit(request.getPageSize())
-                    .iterator()){
-                while (postsByUser.hasNext()) {
-                    resultList.add(documentToPost(postsByUser.next()));
-                }
+        long totalDocuments;
+        int skip = request.getPageNumber() * request.getPageSize();
+        Document query = new Document("user_id", new Document("$in", userIds));
+        totalDocuments = collection.countDocuments(query);
+        try (MongoCursor<Document> cursor = collection
+                .find(query)
+                .sort(Sorts.descending("timestamp"))
+                .skip(skip)
+                .limit(request.getPageSize())
+                .iterator()) {
+            while (cursor.hasNext()) {
+                resultList.add(documentToPost(cursor.next()));
             }
         }
-        return new PageImpl<>(resultList, request, collection.countDocuments());
+
+        return new PageImpl<>(resultList, request, totalDocuments);
     }
 
     public Page<Post> findByUserIdPaged(ObjectId id, PageRequest pageRequest) {
         List<Post> posts = new ArrayList<>();
-//        pageRequest = pageRequest.withSort(Sort.Direction.DESC, "timestamp");
         try (MongoCursor<Document> cursor = collection.find(new Document("user_id", id))
                 .sort(Sorts.descending("timestamp"))
                 .skip((int) pageRequest.getOffset())
@@ -129,7 +129,6 @@ public class PostRepository {
 
         InsertOneResult result = collection.insertOne(postToDocument(post));
         if (result.wasAcknowledged()){
-//            return post;
             return Objects.requireNonNull(result.getInsertedId()).asObjectId().getValue().toHexString();
         } else return null;
     }
@@ -143,11 +142,6 @@ public class PostRepository {
         DeleteResult result = collection.deleteOne(new Document("_id", id));
         return result.getDeletedCount() != 0;
     }
-
-    public boolean deletePostsByUserId(ObjectId id){
-        DeleteResult result = collection.deleteMany(new Document("user_id", id));
-        return result.wasAcknowledged();
-    }
     public Map<ObjectId, Integer> findTopUsersByPosts() {
         Map<ObjectId, Integer> idCountMap = new HashMap<>();
         collection.aggregate(Arrays.asList(
@@ -159,7 +153,6 @@ public class PostRepository {
         });
         return idCountMap;
     }
-
     private Post documentToPost(Document doc) {
         Post post = new Post();
         post.setId(doc.getObjectId("_id").toHexString());
@@ -170,7 +163,6 @@ public class PostRepository {
         post.setHashtags(hashtags != null ? new HashSet<>(hashtags) : new HashSet<>());
         return post;
     }
-
     private Document postToDocument(Post post) {
         Document doc = new Document();
         doc.put("_id", new ObjectId(post.getId()));

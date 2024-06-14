@@ -23,15 +23,34 @@
                 max-width: 500px;
                 width: 100%;
             }
-            /*.search-container {*/
-            /*    position: relative;*/
-            /*    width: 100%;*/
-            /*    max-width: 500px;*/
-            /*}*/
+            .search-container {
+                position: relative;
+                width: 100%;
+                max-width: 500px;
+            }
             .icon {
                 width: 20px;
                 height: 20px;
                 margin-right: 5px;
+            }
+            .dropdown-menu .dropdown-item img {
+                width: 24px;
+                height: 24px;
+                margin-right: 8px;
+            }
+            .dropdown-menu .dropdown-item.logout {
+                color: red;
+            }
+            .dropdown-item {
+                display: flex;
+                align-items: center;
+            }
+            .dropdown-item img {
+                margin-right: 10px;
+            }
+            .dropdown-item span {
+                flex-grow: 1;
+                text-align: center;
             }
             /*.suggestions-box {*/
             /*    position: absolute;*/
@@ -73,7 +92,7 @@
         </form>
         <ul class="navbar-nav ml-auto">
             <li class="nav-item">
-                <a class="nav-link" th:href="@{/feed/personalized}"> <!-- for following/ following posts-->
+                <a class="nav-link" th:href="@{/feed/personalized}">
                     <img th:src="@{/img/people.png}" class="action-icon" alt="Following">
                 </a>
             </li>
@@ -83,28 +102,38 @@
                 </a>
             </li>
             <li class="nav-item" th:if="${loggedInUser != null}">
-                <a class="nav-link" th:if="${hasNewNotifications}" th:href="@{/notifications/{id}(id=${loggedInUser.id})}"> <!-- for notifications-->
+                <a class="nav-link" th:if="${hasNewNotifications}" th:href="@{/notifications/{id}(id=${loggedInUser.id})}">
                     <img th:src="@{/img/newNotifBell.png}" class="action-icon" alt="Notifications">
                 </a>
-                <a class="nav-link" th:unless="${hasNewNotifications}" th:href="@{/notifications/{id}(id=${loggedInUser.id})}"> <!-- for notifications-->
+                <a class="nav-link" th:unless="${hasNewNotifications}" th:href="@{/notifications/{id}(id=${loggedInUser.id})}">
                     <img th:src="@{/img/bell.png}" class="action-icon" alt="Notifications">
                 </a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link d-flex align-items-center" th:if="${loggedInUser != null}" th:href="@{/user/{id}(id=${loggedInUser.id})}">
+            <li th:if="${loggedInUser != null}" class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <img th:src="@{/img/profilepic.png}" class="mr-2 rounded-circle header-profile-pic" alt="Profile Picture">
                     <span th:text="${loggedInUser.username}">Profile</span>
                 </a>
-                <a class="nav-link d-flex align-items-center" th:unless="${loggedInUser != null}" th:href="@{/login}">
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
+                    <a class="dropdown-item" th:href="@{/user/{id}(id=${loggedInUser.id})}">
+                        <img th:src="@{/img/profilepic.png}" class="rounded-circle action-icon" alt="Profile Icon"> <span>Profile</span>
+                    </a>
+                    <a class="dropdown-item logout" th:href="@{/logout}">
+                        <img th:src="@{/img/logout.png}" class="action-icon" alt="Logout Icon"> <span>Logout</span>
+                    </a>
+                </div>
+            </li>
+            <li  th:unless="${loggedInUser != null}" class="nav-item">
+                <a class="nav-link d-flex align-items-center" th:href="@{/auth}">
                     <img th:src="@{/img/profilepic.png}" class="mr-2 rounded-circle header-profile-pic" alt="Profile Picture">
-                    <span>Profile</span>
+                    <span>Login</span>
                 </a>
             </li>
         </ul>
     </div>
 </nav>
 
-<!--<th:block th:fragment="navScripts">-->
+<th:block th:fragment="navScripts">
 <!--    <script>-->
 <!--        document.addEventListener('DOMContentLoaded', function() {-->
 <!--            const searchInput = document.getElementById('search-input');-->
@@ -177,6 +206,6 @@
 <!--            }-->
 <!--        });-->
 <!--    </script>-->
-<!--</th:block>-->
+</th:block>
 </body>
 </html>

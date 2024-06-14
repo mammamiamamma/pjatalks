@@ -13,17 +13,16 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import s26901.pjatalks.Constraints.ObjectIdValidation;
 import s26901.pjatalks.DTO.General.CommentDto;
-import s26901.pjatalks.DTO.General.LikeDto;
 import s26901.pjatalks.DTO.General.NotificationDto;
 import s26901.pjatalks.DTO.Input.PostInputDto;
 import s26901.pjatalks.DTO.Output.PostOutputDto;
 import s26901.pjatalks.DTO.Output.UserOutputDto;
 import s26901.pjatalks.DTO.View.CommentViewDto;
 import s26901.pjatalks.DTO.View.PostViewDto;
-import s26901.pjatalks.Exception.AlreadyLikedException;
 import s26901.pjatalks.Exception.NotAcknowledgedException;
 import s26901.pjatalks.Service.*;
 
@@ -48,19 +47,19 @@ public class PostViewController {
         this.commentService = commentService;
     }
 
-    private boolean checkIfNewNotifications(){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()) {
-            String username = ((UserDetails) authentication.getPrincipal()).getUsername();
-            if (username != null) {
-                Optional<UserOutputDto> userOutputDto = userService.findByUsername(username);
-                if (userOutputDto.isPresent()){
-                    return userService.hasNewNotifications(userOutputDto.get().getId());
-                }
-            }
-        }
-        return false;
-    }
+//    private UserOutputDto checkIfNewNotifications(){
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//        if (authentication != null && authentication.isAuthenticated()) {
+//            String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+//            if (username != null) {
+//                Optional<UserOutputDto> userOutputDto = userService.findByUsername(username);
+//                if (userOutputDto.isPresent()){
+//                    return userService.hasNewNotifications(userOutputDto.get().getId());
+//                }
+//            }
+//        }
+//        return false;
+//    }
 
     @GetMapping
     public String returnToFeed(){
@@ -68,15 +67,32 @@ public class PostViewController {
     }
 
     @GetMapping("/{post_id}")
-    public String getPost(@PathVariable @ObjectIdValidation String post_id, Model model){
+    public String getPost(@PathVariable @ObjectIdValidation String post_id, Model model, RedirectAttributes redirectAttributes){
+        UserOutputDto userOutputDto = null;
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+            if (username != null) {
+                Optional<UserOutputDto> userOutputDtoOpt = userService.findByUsername(username);
+                if (userOutputDtoOpt.isPresent()){
+                    userOutputDto = userOutputDtoOpt.get();
+                    boolean hasNewNotifications = userService.hasNewNotifications(userOutputDtoOpt.get().getId());
+                    model.addAttribute("hasNewNotifications", hasNewNotifications);
+                } else {
+                    return "redirect:/auth";
+                }
+            }
+        }
+//        model.addAttribute("hasNewNotifications", checkIfNewNotifications());
 
-        model.addAttribute("hasNewNotifications", checkIfNewNotifications());
-
-        PostViewDto post = postService.getPostByIdView(post_id);
+        PostViewDto post = postService.getPostByIdView(post_id, userOutputDto);
         model.addAttribute("post", post);
         if (post != null){
             List<CommentViewDto> commentList = commentService.findAllByPostView(post_id);
             model.addAttribute("commentList", commentList);
+        } else {
+            redirectAttributes.addFlashAttribute("errorValid", "No post with such id found");
+            return "redirect:/feed";
         }
         model.addAttribute("standardDate", new Date());
         model.addAttribute("newComment", new CommentDto());
@@ -169,7 +185,7 @@ public class PostViewController {
             String username = ((UserDetails) authentication.getPrincipal()).getUsername();
             Optional<UserOutputDto> userOutputDto = userService.findByUsername(username);
             if (userOutputDto.isPresent()) {
-                boolean liked = false;
+                boolean liked;
                 try {
                     liked = likeService.toggleLike(postId, userOutputDto.get().getId(),  Date.from(Instant.now()));
                     if (liked) sendLikeNotificationToPostsAuthor(userOutputDto.get().getId(), postId);
@@ -202,7 +218,7 @@ public class PostViewController {
                 user_id,
                 "COM"
                 );
-        notificationService.addPostNotification(notificationDto, post_id);
+        notificationService.addUserNotification(notificationDto);
     }
 
     private void sendLikeNotificationToPostsAuthor(String user_id, String post_id){
@@ -216,6 +232,11 @@ public class PostViewController {
                 user_id,
                 "LIKE"
         );
-        notificationService.addPostNotification(notificationDto, post_id);
+        notificationService.addUserNotification(notificationDto);
+    }
+    @ExceptionHandler({HandlerMethodValidationException.class})
+    public String handle(HandlerMethodValidationException e, RedirectAttributes redirectAttributes){
+        redirectAttributes.addFlashAttribute("errorValid", "Error - User/Post with provided ID not found");
+        return "redirect:/feed";
     }
 }

@@ -2,6 +2,7 @@ package s26901.pjatalks.DTO.Input;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.hibernate.validator.constraints.Length;
 
 import java.util.Set;
@@ -16,7 +17,7 @@ public class UserInputDto {
     @NotBlank(message = "Email address is mandatory")
     @Email(message = "Invalid email format")
     private String emailAddress;
-    @Length(max = 330, message = "Short bio must be less than 330 characters")
+    @Size(max = 330, message = "Short bio must be less than 330 characters")
     private String shortBio;
     private Set<RoleDto> userRoles;
 

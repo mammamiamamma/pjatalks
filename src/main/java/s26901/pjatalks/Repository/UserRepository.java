@@ -6,20 +6,16 @@ import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Repository;
 import s26901.pjatalks.Entity.User;
 import s26901.pjatalks.Entity.UserRole;
 
-import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Repository
 public class UserRepository {
     private final MongoCollection<Document> collection;
-
 //    @Value("${spring.data.mongodb.atlas.search.index}")
 //    private String index;
 

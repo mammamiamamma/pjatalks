@@ -17,8 +17,6 @@ import s26901.pjatalks.SupportEntities.HashtagCount;
 import s26901.pjatalks.Service.HashtagService;
 import s26901.pjatalks.Service.PostService;
 
-import java.security.Principal;
-import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -39,33 +37,31 @@ public class FeedViewController {
 
     @GetMapping
     public String getFeed(Model model,
-//                          @RequestParam(defaultValue = "0") int page,
+                          @RequestParam(defaultValue = "0") int page,
                           @RequestParam(defaultValue = "5") int size){
-
+        UserOutputDto userOutputDto = null;
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {
             String username = ((UserDetails) authentication.getPrincipal()).getUsername();
             if (username != null) {
-                Optional<UserOutputDto> userOutputDto = userService.findByUsername(username);
-                if (userOutputDto.isPresent()){
-                    boolean hasNewNotifications = userService.hasNewNotifications(userOutputDto.get().getId());
+                Optional<UserOutputDto> userOutputDtoOpt = userService.findByUsername(username);
+                if (userOutputDtoOpt.isPresent()){
+                    userOutputDto = userOutputDtoOpt.get();
+                    boolean hasNewNotifications = userService.hasNewNotifications(userOutputDtoOpt.get().getId());
                     model.addAttribute("hasNewNotifications", hasNewNotifications);
                 }
             }
         }
-
-        // Add other model attributes
-        Page<PostViewDto> postPage = postService.getViewPostDtos(0, size);
+        Page<PostViewDto> postPage = postService.getViewPostDtos(0, size, userOutputDto);
         Set<HashtagCount> topHashtags = hashtagService.getTrendingHashtags().getHashtag();
+        if (userOutputDto != null) {
+            List<UserOutputDto> top3SuggestedUsers = userService.findTop3SuggestedUsers(userOutputDto.getId());
+            model.addAttribute("suggestedUsers", top3SuggestedUsers);
+        }
         model.addAttribute("postPage", postPage);
         model.addAttribute("topHash", topHashtags);
         model.addAttribute("size", size);
-//        if (principal != null) {
-//            String username = principal.getName();
-//            // Assuming you have a service to fetch user details by username
-//            Optional<UserOutputDto> user = userService.findByUsername(username);
-//            user.ifPresent(userOutputDto -> model.addAttribute("user", userOutputDto));
-//        }
+        model.addAttribute("page", page+1);
         model.addAttribute("newPost", new PostInputDto());
         model.addAttribute("standardDate", new Date());
         model.addAttribute("personalized", false);
@@ -74,8 +70,9 @@ public class FeedViewController {
 
     @GetMapping("/personalized")
     public String getPersonalizedFeed(Model model,
-                                      @RequestParam(defaultValue = "5") int size) {
-
+                                      @RequestParam(defaultValue = "5") int size,
+                                      @RequestParam(defaultValue = "0") int page
+                                      ) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {
             String username = ((UserDetails) authentication.getPrincipal()).getUsername();
@@ -87,10 +84,14 @@ public class FeedViewController {
 
                     // Fetch posts from followed users
                     List<String> followedUserIds = userService.getFollowedUserIds(userOutputDto.get().getId());
-                    Page<PostViewDto> postPage = postService.getPostsByUserIds(followedUserIds, 0, size);
-
+                    Set<HashtagCount> topHashtags = hashtagService.getTrendingHashtags().getHashtag();
+                    Page<PostViewDto> postPage = postService.getPostsByUserIds(followedUserIds, 0, size, userOutputDto.get());
+                    List<UserOutputDto> top3SuggestedUsers = userService.findTop3SuggestedUsers(userOutputDto.get().getId());
+                    model.addAttribute("suggestedUsers", top3SuggestedUsers);
                     model.addAttribute("postPage", postPage);
+                    model.addAttribute("topHash", topHashtags);
                     model.addAttribute("size", size);
+                    model.addAttribute("page", page+1);
                     model.addAttribute("newPost", new PostInputDto());
                     model.addAttribute("standardDate", new Date());
                     model.addAttribute("personalized", true);
@@ -98,6 +99,6 @@ public class FeedViewController {
                 }
             }
         }
-        return "redirect:/login"; // Redirect to login if not authenticated
+        return "redirect:/auth"; // Redirect to login if not authenticated
     }
 }

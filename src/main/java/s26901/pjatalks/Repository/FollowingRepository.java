@@ -30,7 +30,7 @@ public class FollowingRepository {
         List<String> followerList = new ArrayList<>();
         collection.find(new Document("F_user_id", user_id))
                 .forEach(doc -> {
-                    followerList.add(doc.getObjectId("F_follower_id").toHexString());;
+                    followerList.add(doc.getObjectId("F_follower_id").toHexString());
                 });
         return followerList;
     }
@@ -39,7 +39,7 @@ public class FollowingRepository {
         List<String> followerList = new ArrayList<>();
         collection.find(new Document("F_follower_id", user_id))
                 .forEach(doc -> {
-                    followerList.add(doc.getObjectId("F_user_id").toHexString());;
+                    followerList.add(doc.getObjectId("F_user_id").toHexString());
                 });
         return followerList;
     }
@@ -86,7 +86,7 @@ public class FollowingRepository {
     }
 
     public boolean deleteAllFollowingForUser(ObjectId user_id){
-        DeleteResult result = collection.deleteMany(new Document("F_following_id", user_id));
+        DeleteResult result = collection.deleteMany(new Document("F_follower_id", user_id));
         return result.wasAcknowledged();
     }
 
