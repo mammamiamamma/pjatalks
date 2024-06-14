@@ -39,6 +39,18 @@ public class LikeRepository {
         return idCountMap;
     }
 
+    public Map<ObjectId, Integer> findTop3Posts() {
+        Map<ObjectId, Integer> postIdLikeCountMap = new HashMap<>();
+        collection.aggregate(Arrays.asList(
+                Aggregates.group("$post_id", Accumulators.sum("likeCount", 1)),
+                Aggregates.sort(Sorts.descending("likeCount")),
+                Aggregates.limit(3)
+        )).forEach(doc -> {
+            postIdLikeCountMap.put(doc.getObjectId("_id"), doc.getInteger("likeCount"));
+        });
+        return postIdLikeCountMap;
+    }
+
     public List<Like> getLikesByUser(ObjectId user_id){
         List<Like> likes = new ArrayList<>();
         collection.find(new Document("user_id", user_id)).forEach((Document doc) -> {

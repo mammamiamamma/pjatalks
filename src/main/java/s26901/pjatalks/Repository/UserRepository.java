@@ -8,6 +8,7 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Repository;
+import s26901.pjatalks.Entity.Post;
 import s26901.pjatalks.Entity.User;
 import s26901.pjatalks.Entity.UserRole;
 
@@ -55,6 +56,20 @@ public class UserRepository {
         }
         return userCountMap;
     }
+
+    public Map<User, Integer> findUsersByPosts(Map<Post, Integer> postList) {
+        Map<User, Integer> userCountMap = new HashMap<>();
+        for (Post post : postList.keySet()){
+            User user = collection
+                    .find(new Document("_id", new ObjectId(post.getUser_id())))
+                    .map(this::documentToUser)
+                    .first();
+            userCountMap.put(user, postList.get(post));
+        }
+        return userCountMap;
+    }
+
+
 //    public boolean updateUsersLastVisitedTime(ObjectId user_id, Date date){
 //        Document doc = collection.find(new Document("_id", user_id)).first();
 //        if (doc != null){

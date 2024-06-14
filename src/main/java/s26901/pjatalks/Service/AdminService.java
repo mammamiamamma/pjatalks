@@ -1,7 +1,9 @@
 package s26901.pjatalks.Service;
 
+import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
 import s26901.pjatalks.DTO.Output.UserOutputDto;
+import s26901.pjatalks.Entity.Post;
 import s26901.pjatalks.Entity.User;
 import s26901.pjatalks.Mapper.UserMapper;
 import s26901.pjatalks.Repository.*;
@@ -49,7 +51,9 @@ public class AdminService {
     }
 
     public Map<UserOutputDto, Integer> getTopUsersByLikes() {
-        Map<User, Integer> userMap = userRepository.findUsers(likeRepository.findTop3LikingUsers());
+        Map<ObjectId, Integer> top3Posts = likeRepository.findTop3Posts();
+        Map<Post, Integer> posts = postRepository.findPostsByIds(top3Posts);
+        Map<User, Integer> userMap = userRepository.findUsersByPosts(posts);
         return sortUserMap(userMap);
     }
 

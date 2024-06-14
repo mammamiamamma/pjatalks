@@ -18,6 +18,7 @@ import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Repository;
 import s26901.pjatalks.Entity.Post;
+import s26901.pjatalks.Entity.User;
 import s26901.pjatalks.SupportEntities.HashtagCount;
 
 import java.util.*;
@@ -152,6 +153,18 @@ public class PostRepository {
             idCountMap.put(doc.getObjectId("_id"), doc.getInteger("postCount"));
         });
         return idCountMap;
+    }
+
+    public Map<Post, Integer> findPostsByIds(Map<ObjectId, Integer> idList) {
+        Map<Post, Integer> userCountMap = new HashMap<>();
+        for (ObjectId id : idList.keySet()){
+            Post post = collection
+                    .find(new Document("_id", id))
+                    .map(this::documentToPost)
+                    .first();
+            userCountMap.put(post, idList.get(id));
+        }
+        return userCountMap;
     }
     private Post documentToPost(Document doc) {
         Post post = new Post();
