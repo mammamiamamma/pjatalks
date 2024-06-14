@@ -63,19 +63,19 @@ public class SearchService {
         return users.stream().map(userMapper::map).collect(Collectors.toList());
     }
 
-    public List<PostViewDto> searchPosts(String query) {
+    public List<PostViewDto> searchPosts(String query, UserOutputDto userOutputDto) {
         List<Post> posts = postRepository.findPostsByTextContaining(query);
         List<PostViewDto> resultList = new ArrayList<>();
         for (Post post : posts){
-            resultList.add(getViewDtoFromPost(post));
+            resultList.add(getViewDtoFromPost(post, userOutputDto));
         }
         return resultList;
     }
 
-    private PostViewDto getViewDtoFromPost(Post post){
-        Optional<User> user = userRepository.findById(new ObjectId(post.getUser_id()));
-        if (user.isPresent()){
-            UserOutputDto userOutputDto = userMapper.map(user.get());
+    private PostViewDto getViewDtoFromPost(Post post, UserOutputDto userOutputDto){
+//        Optional<User> user = userRepository.findById(new ObjectId(post.getUser_id()));
+//        if (user.isPresent()){
+//            UserOutputDto userOutputDto = userMapper.map(user.get());
             PostViewDto postViewDto = new PostViewDto();
             postViewDto.setPost_id(post.getId());
             postViewDto.setUser(userOutputDto);
@@ -94,7 +94,7 @@ public class SearchService {
                     likeRepository.isAlreadyLiked(new ObjectId(userOutputDto.getId()), new ObjectId(post.getId()))
             );
             return postViewDto;
-        }
-        return null;
+//        }
+//        return null;
     }
 }

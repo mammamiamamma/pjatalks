@@ -57,14 +57,14 @@ public class SearchViewController {
 
     @GetMapping("/results")
     public String searchResults(@RequestParam("query") String query, Model model) {
-        List<UserSearchDto> users = searchService.searchUsers(query);
-        List<PostViewDto> posts = searchService.searchPosts(query);
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {
             String username = ((UserDetails) authentication.getPrincipal()).getUsername();
             if (username != null) {
                 Optional<UserOutputDto> userOutputDto = userService.findByUsername(username);
                 if (userOutputDto.isPresent()) {
+                    List<UserSearchDto> users = searchService.searchUsers(query);
+                    List<PostViewDto> posts = searchService.searchPosts(query, userOutputDto.get());
                     for (UserSearchDto userSearchDto : users){
                         int followStatus = 0;
                         if (!userOutputDto.get().getId().equals(userSearchDto.user.getId())){
@@ -74,14 +74,14 @@ public class SearchViewController {
                         }
                         userSearchDto.IsFollowed = followStatus;
                     }
+                    model.addAttribute("users", users);
+                    model.addAttribute("posts", posts);
+                    model.addAttribute("query", query);
                 }
             }
         }
-
-        model.addAttribute("users", users);
-        model.addAttribute("posts", posts);
-        model.addAttribute("query", query);
-
+//        List<UserSearchDto> users = searchService.searchUsers(query);
+//        List<PostViewDto> posts = searchService.searchPosts(query);
         return "search";
     }
 }

@@ -81,18 +81,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.like-form').forEach(function(form) {
                 form.addEventListener('submit', function(event) {
-                    event.preventDefault();
+                    event.preventDefault(); // Prevent default form submission
                     const postId = form.querySelector('input[name="postId"]').value;
                     const likeCountElement = document.getElementById(`likeCount-${postId}`);
                     const likeIcon = document.getElementById(`likeIcon-${postId}`);
-
-                    // Debugging logs
-                    if (!likeCountElement) {
-                        console.error(`Like count element with ID likeCount-${postId} not found.`);
-                    }
-                    if (!likeIcon) {
-                        console.error(`Like icon element with ID likeIcon-${postId} not found.`);
-                    }
 
                     fetch(form.action, {
                         method: 'POST',
@@ -102,7 +94,12 @@
                             'X-Requested-With': 'XMLHttpRequest'
                         }
                     })
-                        .then(response => response.json())
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
                         .then(data => {
                             if (likeCountElement && likeIcon) {
                                 likeCountElement.textContent = data.likeCount;
@@ -119,5 +116,6 @@
         });
     </script>
 </th:block>
+
 </body>
 </html>
