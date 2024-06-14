@@ -253,7 +253,7 @@ public class UserService implements UserDetailsService {
         return false;
     }
 
-    public List<UserOutputDto> findTop3SuggestedUsers(String id){
+    public List<UserOutputDto> findTop3SuggestedUsers(String id) {
         Optional<User> loggedInUserOpt = userRepository.findById(new ObjectId(id));
         if (loggedInUserOpt.isEmpty()) {
             return Collections.emptyList();
@@ -272,10 +272,15 @@ public class UserService implements UserDetailsService {
         Map<String, Integer> suggestionCount = new HashMap<>();
 
         for (User followingUser : followingUsers) {
-            for (String followerId : followingRepository.getListOfFollowingIds(new ObjectId(followingUser.getId()))) {
-                if (!followerId.equals(loggedInUser.getId()) && !followingIds.contains(followerId)) {
-                    suggestionCount.put(followerId, suggestionCount.getOrDefault(followerId, 0) + 1);
+            if (followingUser == null) {
+                continue;
+            }
+            List<String> followers = followingRepository.getListOfFollowingIds(new ObjectId(followingUser.getId()));
+            for (String followerId : followers) {
+                if (followerId == null || followerId.equals(loggedInUser.getId()) || followingIds.contains(followerId)) {
+                    continue;
                 }
+                suggestionCount.put(followerId, suggestionCount.getOrDefault(followerId, 0) + 1);
             }
         }
 
