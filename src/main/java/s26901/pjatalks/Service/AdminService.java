@@ -60,18 +60,14 @@ public class AdminService {
     private Map<UserOutputDto, Integer> sortUserMap(Map<User, Integer> userMap){
         Map<UserOutputDto, Integer> resultMap = new HashMap<>();
 
-        // Map User to UserOutputDto
         for (User user : userMap.keySet()) {
             resultMap.put(userMapper.map(user), userMap.get(user));
         }
 
-        // Create a list from the entries of resultMap
         List<Map.Entry<UserOutputDto, Integer>> entryList = new ArrayList<>(resultMap.entrySet());
 
-        // Sort the list by values in descending order
         entryList.sort((entry1, entry2) -> entry2.getValue().compareTo(entry1.getValue()));
 
-        // Insert the sorted entries into a LinkedHashMap to preserve order
         Map<UserOutputDto, Integer> sortedResultMap = new LinkedHashMap<>();
         for (Map.Entry<UserOutputDto, Integer> entry : entryList) {
             sortedResultMap.put(entry.getKey(), entry.getValue());

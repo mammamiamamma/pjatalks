@@ -36,7 +36,7 @@ public class AuthService {
             // Manually set the session and cookie
             request.getSession().setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
 
-            // Create and set the session cookie
+            // Create and set the session cookie (don't know if that's correct but works)
             Cookie sessionCookie = new Cookie("JSESSIONID", request.getSession().getId());
             sessionCookie.setHttpOnly(true);
             sessionCookie.setMaxAge(86400); // 1 day

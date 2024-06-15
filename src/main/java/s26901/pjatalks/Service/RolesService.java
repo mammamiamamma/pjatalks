@@ -22,14 +22,14 @@ public class RolesService {
         else throw new IllegalArgumentException("Such role already exists");
     }
 
-    public void addRoleToUser(RoleDto roleDto){
-
-    }
-
-    public String deleteRole(RoleDto roleDto){
-        if (rolesRepository.findByName(roleDto.getName()) == null){
-            return rolesRepository.save(roleMapper.map(roleDto)).getId();
-        }
-        else throw new IllegalArgumentException("Such role already exists");
-    }
+//    public void addRoleToUser(RoleDto roleDto){
+//
+//    }
+//
+//    public String deleteRole(RoleDto roleDto){
+//        if (rolesRepository.findByName(roleDto.getName()) == null){
+//            return rolesRepository.save(roleMapper.map(roleDto)).getId();
+//        }
+//        else throw new IllegalArgumentException("Such role already exists");
+//    }
 }

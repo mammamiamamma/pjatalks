@@ -88,11 +88,11 @@ public class UserViewController {
                     Optional<UserOutputDto> userOutputDto = userService.findByUsername(username);
                     if (userOutputDto.isPresent() && !userOutputDto.get().getId().equals(id)) {
                         model.addAttribute("hasNewNotifications", userService.hasNewNotifications(userOutputDto.get().getId()));
+                        FollowingViewDto userViewDto = followingService.getFollowingView(userOutputDto.get());
+                        model.addAttribute("followUser", userViewDto);
                     }
                 }
             }
-            FollowingViewDto userViewDto = followingService.getFollowingView(id);
-            model.addAttribute("followUser", userViewDto);
         } catch (NoSuchElementException e){
             model.addAttribute("errorValid", "No user with such id found!");
         } catch (Exception e){

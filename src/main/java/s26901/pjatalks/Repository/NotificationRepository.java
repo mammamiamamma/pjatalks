@@ -31,9 +31,7 @@ public class NotificationRepository {
 
     public Optional<Notification> findById(ObjectId id){
         return Optional.ofNullable(
-                collection.find(
-                        new Document("_id", id)
-                        )
+                collection.find(new Document("_id", id))
                         .first()
                 )
                 .map(this::documentToNotification);
@@ -43,25 +41,17 @@ public class NotificationRepository {
         List<Notification> notifications = new ArrayList<>();
         collection.find(new Document("user_id", user_Id))
                 .sort(Sorts.descending("timestamp"))
-                .forEach(
-                        document -> {
+                .forEach(document -> {
                             notifications.add(documentToNotification(document));
-                        }
-                        );
+                        });
         return notifications;
     }
 
-    public String insertNotification(Notification notification){
+    public boolean insertNotification(Notification notification){
         ObjectId newId = new ObjectId();
         notification.setId(newId.toHexString());
         InsertOneResult result = collection.insertOne(notificationToDocument(notification));
-        if (result.wasAcknowledged())
-            return Objects.requireNonNull(
-                    result.getInsertedId())
-                    .asObjectId()
-                    .getValue()
-                    .toHexString();
-        else return null;
+        return result.wasAcknowledged();
     }
 
     public boolean deleteNotificationsOfUser(ObjectId user_id){
@@ -96,16 +86,16 @@ public class NotificationRepository {
                 .append("type", type);
         return collection.countDocuments(query)>0;
     }
-    public Notification findByUserIdCauserIdAndType(ObjectId user_id, ObjectId causer_id, String type){
-        Document query = new Document("user_id", user_id)
-                .append("causer_id", causer_id)
-                .append("type", type);
-        Document doc = collection.find(query).first();
-        if (doc != null){
-            return documentToNotification(doc);
-        }
-        return null;
-    }
+//    public Notification findByUserIdCauserIdAndType(ObjectId user_id, ObjectId causer_id, String type){
+//        Document query = new Document("user_id", user_id)
+//                .append("causer_id", causer_id)
+//                .append("type", type);
+//        Document doc = collection.find(query).first();
+//        if (doc != null){
+//            return documentToNotification(doc);
+//        }
+//        return null;
+//    }
 
     private Notification documentToNotification(Document document){
         return new Notification(

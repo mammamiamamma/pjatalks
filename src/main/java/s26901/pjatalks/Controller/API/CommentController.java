@@ -41,7 +41,7 @@ public class CommentController {
     @GetMapping("/post/{post_id}")
     public ResponseEntity<?> getCommentByPost(@PathVariable String post_id) {
         try {
-            List<CommentDto> comments = commentService.findAllByPostApi(post_id);
+            List<CommentViewDto> comments = commentService.findAllByPostView(post_id);
             return ResponseEntity.ok(comments);
         } catch (IllegalArgumentException e){
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -113,9 +113,7 @@ public class CommentController {
         Map<String, String> result = new HashMap<>();
         ex.getAllValidationResults().forEach(entry ->{
             List<String> errors = new ArrayList<>();
-            entry.getResolvableErrors().forEach(ent -> {
-                errors.add(ent.getDefaultMessage());
-            });
+            entry.getResolvableErrors().forEach(ent -> errors.add(ent.getDefaultMessage()));
             result.put(entry.getMethodParameter().getParameterName(), errors.toString());
         });
         return result;

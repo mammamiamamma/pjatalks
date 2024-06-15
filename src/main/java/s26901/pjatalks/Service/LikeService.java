@@ -7,10 +7,11 @@ import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import s26901.pjatalks.DTO.General.LikeDto;
+import s26901.pjatalks.DTO.Output.PostOutputDto;
 import s26901.pjatalks.Entity.Like;
 import s26901.pjatalks.Entity.Post;
-import s26901.pjatalks.Exception.AlreadyLikedException;
 import s26901.pjatalks.Mapper.LikeMapper;
+import s26901.pjatalks.Mapper.PostMapper;
 import s26901.pjatalks.Repository.LikeRepository;
 import s26901.pjatalks.Repository.PostRepository;
 import s26901.pjatalks.Repository.UserRepository;
@@ -20,13 +21,15 @@ import java.util.*;
 @Service
 public class LikeService {
     private final LikeMapper likeMapper;
+    private final PostMapper postMapper;
     private final LikeRepository likeRepository;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final Validator validator;
 
-    public LikeService(LikeMapper likeMapper, LikeRepository likeRepository, UserRepository userRepository, PostRepository postRepository, Validator validator) {
+    public LikeService(LikeMapper likeMapper, PostMapper postMapper, LikeRepository likeRepository, UserRepository userRepository, PostRepository postRepository, Validator validator) {
         this.likeMapper = likeMapper;
+        this.postMapper = postMapper;
         this.likeRepository = likeRepository;
         this.userRepository = userRepository;
         this.postRepository = postRepository;
@@ -34,46 +37,36 @@ public class LikeService {
     }
 
     public long getLikeCountForPost(String post_id){
-//        if (!ObjectId.isValid(post_id)) throw new IllegalArgumentException("Invalid post_id");
         return likeRepository.countLikesByPostId(new ObjectId(post_id));
     }
 
-    public List<Post> getLikesByUser(String user_id){
-//        ObjectId transId = new ObjectId(user_id);
-//        if (!ObjectId.isValid(user_id)) throw new IllegalArgumentException("Invalid user_id");
+    public List<PostOutputDto> getLikesByUser(String user_id){
         List<LikeDto> listOfLikes = likeRepository.getLikesByUser(new ObjectId(user_id))
                 .stream()
                 .map(likeMapper::map)
                 .toList();
-        List<Post> listOfLikedPosts = new ArrayList<>();
+        List<PostOutputDto> listOfLikedPosts = new ArrayList<>();
         for (LikeDto likeDto : listOfLikes){
             Optional<Post> post = postRepository.findById(new ObjectId(likeDto.getPost_id()));
-            post.ifPresent(listOfLikedPosts::add);
+            post.ifPresent(p -> listOfLikedPosts.add(postMapper.map(p)));
         }
         return listOfLikedPosts;
     }
 
-//    public boolean isAlreadyLiked(String user_id, String post_id){
-//        if (!ObjectId.isValid(user_id) || userRepository.findById(new ObjectId(user_id)).isEmpty())
+//    public String insertNewLike(LikeDto likeDto) throws AlreadyLikedException {
+//        String user_id = likeDto.getUser_id();
+//        String post_id = likeDto.getPost_id();
+//        if (userRepository.findById(new ObjectId(user_id)).isEmpty())
 //            throw new IllegalArgumentException("Invalid user_id");
-//        if (!ObjectId.isValid(post_id) || postRepository.findById(new ObjectId(post_id)).isEmpty())
+//        if (postRepository.findById(new ObjectId(post_id)).isEmpty())
 //            throw new IllegalArgumentException("Invalid post_id");
-//        return likeRepository.isAlreadyLiked(new ObjectId(user_id), new ObjectId(post_id));
+//        if (likeRepository.isAlreadyLiked(new ObjectId(user_id), new ObjectId(post_id))){
+//            throw new AlreadyLikedException("This post is already liked by this user");
+//        }
+//        return likeRepository.insertLikeToPost(likeMapper.map(likeDto));
 //    }
 
-    public String insertNewLike(LikeDto likeDto) throws AlreadyLikedException {
-        String user_id = likeDto.getUser_id();
-        String post_id = likeDto.getPost_id();
-        if (userRepository.findById(new ObjectId(user_id)).isEmpty())
-            throw new IllegalArgumentException("Invalid user_id");
-        if (postRepository.findById(new ObjectId(post_id)).isEmpty())
-            throw new IllegalArgumentException("Invalid post_id");
-        if (likeRepository.isAlreadyLiked(new ObjectId(user_id), new ObjectId(post_id))){
-            throw new AlreadyLikedException("This post is already liked by this user");
-        }
-        return likeRepository.insertLikeToPost(likeMapper.map(likeDto));
-    }
-
+    @Transactional
     public boolean toggleLike(String post_id, String user_id, Date timestamp) {
         if (userRepository.findById(new ObjectId(user_id)).isEmpty())
             throw new IllegalArgumentException("Invalid user_id");
@@ -95,12 +88,6 @@ public class LikeService {
 
     @Transactional
     public boolean deleteLikeFromPost(String user_id, String post_id){
-//        if (!ObjectId.isValid(user_id)) {
-//            throw new IllegalArgumentException("Invalid ObjectId: " + user_id);
-//        }
-//        if (!ObjectId.isValid(post_id)) {
-//            throw new IllegalArgumentException("Invalid ObjectId: " + post_id);
-//        }
         return likeRepository.deleteLikeFromPostByUser(new ObjectId(user_id), new ObjectId(post_id));
     }
 

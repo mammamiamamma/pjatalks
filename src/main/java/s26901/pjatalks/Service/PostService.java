@@ -50,94 +50,104 @@ public class PostService {
     }
     public Page<PostViewDto> getViewPostDtos(int page, int size, UserOutputDto userOutputDto) {
         PageRequest pageRequest = PageRequest.of(page, size);
-        Page<Post> postPage = postRepository.findAll(pageRequest); //need that
-        List<Post> posts = postPage.getContent();
-        List<PostViewDto> postDTOs = new ArrayList<>();
-
-        for (Post post : posts) {
-            postDTOs.add(getViewFromPost(post, userOutputDto));
-        }
+        Page<Post> postPage = postRepository.findAll(pageRequest);
+        List<PostViewDto> postDTOs = postPage.getContent().stream()
+                .map(post -> getViewFromPost(post, userOutputDto))
+                .collect(Collectors.toList());
 
         return new PageImpl<>(postDTOs, pageRequest, postPage.getTotalElements());
     }
 
-    private PostViewDto getViewFromPost(Post post, UserOutputDto userOutputDto){
+    private PostViewDto getViewFromPost(Post post, UserOutputDto userOutputDto) {
         User user = userRepository.findById(new ObjectId(post.getUser_id())).orElse(null);
-        UserOutputDto userFromPostDto;
-        boolean isAlreadyLiked = false;
-        if (userOutputDto != null){
-//            userOutput = userMapper.map(user.get());
-            isAlreadyLiked = likeRepository.isAlreadyLiked(new ObjectId(userOutputDto.getId()), new ObjectId(post.getId()));
-        } if (user != null){
-            userFromPostDto = userMapper.map(user);
-        } else {
-            userFromPostDto = new UserOutputDto();
-            userFromPostDto.setUsername("Anon");
-        }
+        UserOutputDto userFromPostDto = user != null ? userMapper.map(user) : createAnonymousUser();
+
+        boolean isAlreadyLiked = userOutputDto != null && likeRepository.isAlreadyLiked(new ObjectId(userOutputDto.getId()), new ObjectId(post.getId()));
         long likeCount = likeRepository.countLikesByPostId(new ObjectId(post.getId()));
         long commentCount = commentRepository.countCommentsByPost(new ObjectId(post.getId()));
+
         return new PostViewDto(post.getId(), postMapper.map(post), userFromPostDto, likeCount, commentCount, isAlreadyLiked);
+    }
+
+    private UserOutputDto createAnonymousUser() {
+        UserOutputDto userFromPostDto = new UserOutputDto();
+        userFromPostDto.setUsername("Anon");
+        return userFromPostDto;
     }
     public List<PostOutputDto> getPostsByUserId(String id){
         return postRepository.findByUserId(new ObjectId(id)).stream().map(postMapper::map).toList();
     }
 
-    public PostOutputDto getPostByIdApi(String id){
-        Optional<Post> post = postRepository.findById(new ObjectId(id));
-        return post.map(postMapper::map).orElse(null);
+    public PostOutputDto getPostByIdApi(String id) {
+        return postRepository.findById(new ObjectId(id))
+                .map(postMapper::map)
+                .orElse(null);
     }
 
-    public PostViewDto getPostByIdView(String id, UserOutputDto userOutputDto){
-        Optional<Post> postOpt = postRepository.findById(new ObjectId(id));
-        if (postOpt.isPresent()){
-            Post post = postOpt.get();
-            return getViewFromPost(post, userOutputDto);
-        } else return null;
+    public PostViewDto getPostByIdView(String id, UserOutputDto userOutputDto) {
+        return postRepository.findById(new ObjectId(id))
+                .map(post -> getViewFromPost(post, userOutputDto))
+                .orElse(null);
     }
 
-    public PostViewDto insertPost(PostInputDto postDto){
-        String user_id = postDto.getUser_id();
-        if (userRepository.findById(new ObjectId(user_id)).isEmpty())
+    public PostViewDto insertPost(PostInputDto postDto) {
+        if (userRepository.findById(new ObjectId(postDto.getUser_id())).isEmpty()) {
             throw new IllegalArgumentException("Invalid author's user_id");
-        //maybe make timestamp = now here instead of in the form?
-//        if (post.getTimestamp().before(Date.from(Instant.now())))
-//            throw new IllegalArgumentException("Timestamp can't be earlier than current time");
-        Post post = postMapper.map(postDto);
-        Set<ConstraintViolation<Post>> errorsPost = validator.validate(post);
-        if (errorsPost.isEmpty()){
-            PostViewDto viewPost = new PostViewDto();
-            String post_id = postRepository.insertPost(postMapper.map(postDto));
-            if (post_id == null) return null;
-            viewPost.setPost_id(post_id);
-            viewPost.setPost(postMapper.map(post));
-            Optional<User> userOptional = userRepository.findById(new ObjectId(postDto.getUser_id()));
-            if (userOptional.isPresent()) {
-                viewPost.setUser(userMapper.map(userOptional.get()));
-            } else throw new IllegalArgumentException("No user with such id found");
-            viewPost.setLikeCount(0);
-            viewPost.setCommentCount(0);
-            return viewPost;
         }
-        else throw new ConstraintViolationException("Validation for Post object failed", errorsPost);
+
+        Post post = postMapper.map(postDto);
+        validatePost(post);
+
+        String post_id = postRepository.insertPost(post);
+        if (post_id == null) {
+            return null;
+        }
+
+        return createPostViewDto(post, postDto.getUser_id(), post_id);
+    }
+
+    private void validatePost(Post post) {
+        Set<ConstraintViolation<Post>> errorsPost = validator.validate(post);
+        if (!errorsPost.isEmpty()) {
+            throw new ConstraintViolationException("Validation for Post object failed", errorsPost);
+        }
+    }
+
+    private PostViewDto createPostViewDto(Post post, String userId, String postId) {
+        User user = userRepository.findById(new ObjectId(userId)).orElseThrow(() -> new IllegalArgumentException("No user with such id found"));
+
+        PostViewDto viewPost = new PostViewDto();
+        viewPost.setPost_id(postId);
+        viewPost.setPost(postMapper.map(post));
+        viewPost.setUser(userMapper.map(user));
+        viewPost.setLikeCount(0);
+        viewPost.setCommentCount(0);
+
+        return viewPost;
     }
 
     @Transactional
-    public void deletePostsByUserId(String user_id) throws NotAcknowledgedException {
-        List<Post> postsForDeletion = postRepository.findByUserId(new ObjectId(user_id));
-        for (Post post : postsForDeletion){
-            commentRepository.deleteCommentsOfPost(new ObjectId(post.getId()));
-            likeRepository.deleteAllLikesByPost(new ObjectId(post.getId()));
+    public void deletePostsByUserId(String userId) throws NotAcknowledgedException {
+        List<Post> postsForDeletion = postRepository.findByUserId(new ObjectId(userId));
+        for (Post post : postsForDeletion) {
+            deletePostDependencies(post.getId());
             postRepository.deletePost(new ObjectId(post.getId()));
         }
     }
 
     @Transactional
-    public boolean deletePost(String post_id) throws NotAcknowledgedException {
-        if (!likeRepository.deleteAllLikesByPost(new ObjectId(post_id)))
+    public boolean deletePost(String postId) throws NotAcknowledgedException {
+        deletePostDependencies(postId);
+        return postRepository.deletePost(new ObjectId(postId));
+    }
+
+    private void deletePostDependencies(String postId) throws NotAcknowledgedException {
+        if (!likeRepository.deleteAllLikesByPost(new ObjectId(postId))) {
             throw new NotAcknowledgedException("Deletion from 'likes' not acknowledged by database");
-        if (!commentRepository.deleteCommentsOfPost(new ObjectId(post_id)))
-            throw new NotAcknowledgedException("Deletion from 'likes' not acknowledged by database");
-        return postRepository.deletePost(new ObjectId(post_id));
+        }
+        if (!commentRepository.deleteCommentsOfPost(new ObjectId(postId))) {
+            throw new NotAcknowledgedException("Deletion from 'comments' not acknowledged by database");
+        }
     }
 
     public Page<PostViewDto> getPostsByUserIds(List<String> followedUserIds, int page, int size, UserOutputDto userOutputDto) {
@@ -146,8 +156,7 @@ public class PostService {
                 .map(ObjectId::new)
                 .collect(Collectors.toList());
         Page<Post> postPage = postRepository.findByUserIds(idToObjectIds, pageRequest);
-        List<Post> posts = postPage.getContent();
-        List<PostViewDto> postDTOs = posts.stream()
+        List<PostViewDto> postDTOs = postPage.getContent().stream()
                 .map(post -> getViewFromPost(post, userOutputDto))
                 .collect(Collectors.toList());
 

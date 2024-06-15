@@ -14,7 +14,6 @@ import s26901.pjatalks.Constraints.ObjectIdValidation;
 import s26901.pjatalks.DTO.Input.PostInputDto;
 import s26901.pjatalks.DTO.Output.PostOutputDto;
 import s26901.pjatalks.DTO.View.PostViewDto;
-import s26901.pjatalks.Entity.Post;
 import s26901.pjatalks.Exception.NotAcknowledgedException;
 import s26901.pjatalks.Service.PostService;
 
@@ -101,9 +100,7 @@ public class PostController {
         Map<String, String> result = new HashMap<>();
         ex.getAllValidationResults().forEach(entry ->{
             List<String> errors = new ArrayList<>();
-            entry.getResolvableErrors().forEach(ent -> {
-                errors.add(ent.getDefaultMessage());
-            });
+            entry.getResolvableErrors().forEach(ent -> errors.add(ent.getDefaultMessage()));
             result.put(entry.getMethodParameter().getParameterName(), errors.toString());
         });
         return result;

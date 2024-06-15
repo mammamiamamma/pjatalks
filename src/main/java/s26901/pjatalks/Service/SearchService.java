@@ -11,9 +11,7 @@ import s26901.pjatalks.Mapper.PostMapper;
 import s26901.pjatalks.Mapper.UserMapper;
 import s26901.pjatalks.Repository.*;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,12 +35,10 @@ public class SearchService {
     }
 
     public List<UserSearchDto> searchUsers(String query) {
-        List<User> users = userRepository.findUsersByUsernameContaining(query);
-        List<UserSearchDto> resultList = new ArrayList<>();
-        for (User user : users){
-            resultList.add(getSearchDtoFromUser(user));
-        }
-        return resultList;
+        return userRepository.findUsersByUsernameContaining(query)
+                .stream()
+                .map(this::getSearchDtoFromUser)
+                .collect(Collectors.toList());
     }
 
     private UserSearchDto getSearchDtoFromUser(User user){
@@ -59,17 +55,17 @@ public class SearchService {
     }
 
     public List<UserOutputDto> searchUsersForSuggestions(String query) {
-        List<User> users = userRepository.findUsersForSuggestionsByUsernameContaining(query);
-        return users.stream().map(userMapper::map).collect(Collectors.toList());
+        return userRepository.findUsersForSuggestionsByUsernameContaining(query)
+                .stream()
+                .map(userMapper::map)
+                .collect(Collectors.toList());
     }
 
     public List<PostViewDto> searchPosts(String query, UserOutputDto userOutputDto) {
-        List<Post> posts = postRepository.findPostsByTextContaining(query);
-        List<PostViewDto> resultList = new ArrayList<>();
-        for (Post post : posts){
-            resultList.add(getViewDtoFromPost(post, userOutputDto));
-        }
-        return resultList;
+        return postRepository.findPostsByTextContaining(query)
+                .stream()
+                .map(post -> getViewDtoFromPost(post, userOutputDto))
+                .collect(Collectors.toList());
     }
 
     private PostViewDto getViewDtoFromPost(Post post, UserOutputDto userOutputDto){

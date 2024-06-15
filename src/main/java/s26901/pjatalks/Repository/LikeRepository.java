@@ -27,17 +27,17 @@ public class LikeRepository {
         return collection.countDocuments(new Document("post_id", post_id));
     }
 
-    public Map<ObjectId, Integer> findTop3LikingUsers() {
-        Map<ObjectId, Integer> idCountMap = new HashMap<>();
-        collection.aggregate(Arrays.asList(
-                Aggregates.group("$user_id", Accumulators.sum("likeCount", 1)),
-                Aggregates.sort(Sorts.descending("likeCount")),
-                Aggregates.limit(3)
-        )).forEach(doc -> {
-            idCountMap.put(doc.getObjectId("_id"), doc.getInteger("likeCount"));
-        });
-        return idCountMap;
-    }
+//    public Map<ObjectId, Integer> findTop3LikingUsers() {
+//        Map<ObjectId, Integer> idCountMap = new HashMap<>();
+//        collection.aggregate(Arrays.asList(
+//                Aggregates.group("$user_id", Accumulators.sum("likeCount", 1)),
+//                Aggregates.sort(Sorts.descending("likeCount")),
+//                Aggregates.limit(3)
+//        )).forEach(doc -> {
+//            idCountMap.put(doc.getObjectId("_id"), doc.getInteger("likeCount"));
+//        });
+//        return idCountMap;
+//    }
 
     public Map<ObjectId, Integer> findTop3Posts() {
         Map<ObjectId, Integer> postIdLikeCountMap = new HashMap<>();
@@ -63,15 +63,11 @@ public class LikeRepository {
         Document query = new Document("user_id", userId).append("post_id", postId);
         return collection.countDocuments(query) > 0;
     }
-    public String insertLikeToPost(Like like){
+    public boolean insertLikeToPost(Like like){
         ObjectId newId = new ObjectId();
         like.setId(newId.toHexString());
         InsertOneResult result = collection.insertOne(likeToDocument(like));
-        if (result.wasAcknowledged()) {
-            return Objects.requireNonNull(result.getInsertedId()).asObjectId().getValue().toHexString();
-        }
-        //probably change to exception such that if result was not acknowledged we throw
-        return null;
+        return result.wasAcknowledged();
     }
 
     public boolean deleteLikeFromPostByUser(ObjectId userId, ObjectId postId) {

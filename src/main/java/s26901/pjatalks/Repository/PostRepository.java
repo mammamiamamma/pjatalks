@@ -18,10 +18,10 @@ import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Repository;
 import s26901.pjatalks.Entity.Post;
-import s26901.pjatalks.Entity.User;
 import s26901.pjatalks.SupportEntities.HashtagCount;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 public class PostRepository {
@@ -105,7 +105,7 @@ public class PostRepository {
                 resultList.add(documentToPost(cursor.next()));
             }
         }
-
+        // Create and return a Page object with the results
         return new PageImpl<>(resultList, request, totalDocuments);
     }
 
@@ -149,22 +149,26 @@ public class PostRepository {
                 Aggregates.group("$user_id", Accumulators.sum("postCount", 1)),
                 Aggregates.sort(Sorts.descending("postCount")),
                 Aggregates.limit(3)
-        )).forEach(doc -> {
-            idCountMap.put(doc.getObjectId("_id"), doc.getInteger("postCount"));
-        });
+        )).forEach(doc -> idCountMap.put(doc.getObjectId("_id"), doc.getInteger("postCount")));
         return idCountMap;
     }
 
     public Map<Post, Integer> findPostsByIds(Map<ObjectId, Integer> idList) {
-        Map<Post, Integer> userCountMap = new HashMap<>();
-        for (ObjectId id : idList.keySet()){
-            Post post = collection
-                    .find(new Document("_id", id))
-                    .map(this::documentToPost)
-                    .first();
-            userCountMap.put(post, idList.get(id));
+        Map<Post, Integer> postCountMap = new HashMap<>();
+        List<ObjectId> ids = new ArrayList<>(idList.keySet());
+        Document query = new Document("_id", new Document("$in", ids));
+
+        try (MongoCursor<Document> cursor = collection.find(query).iterator()) {
+            while (cursor.hasNext()) {
+                Document doc = cursor.next();
+                Post post = documentToPost(doc);
+                ObjectId postId = doc.getObjectId("_id");
+                Integer count = idList.get(postId);
+                postCountMap.put(post, count);
+            }
         }
-        return userCountMap;
+
+        return postCountMap;
     }
     private Post documentToPost(Document doc) {
         Post post = new Post();

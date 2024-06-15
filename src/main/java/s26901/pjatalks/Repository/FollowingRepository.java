@@ -68,11 +68,11 @@ public class FollowingRepository {
         } else return null;
     }
 
-    public boolean addFollower(String user_id, String target_id){
-        Following following = new Following(user_id, target_id);
-        InsertOneResult result = collection.insertOne(followingToDocument(following));
-        return result.wasAcknowledged();
-    }
+//    public boolean addFollower(String user_id, String target_id){
+//        Following following = new Following(user_id, target_id);
+//        InsertOneResult result = collection.insertOne(followingToDocument(following));
+//        return result.wasAcknowledged();
+//    }
 
     //can be used to delete both the follower and the 'followee' (person who is followed)
     public boolean deleteFollowerFromUser(ObjectId follower_id, ObjectId user_id){

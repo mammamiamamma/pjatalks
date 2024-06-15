@@ -15,6 +15,7 @@ import s26901.pjatalks.Repository.NotificationRepository;
 import s26901.pjatalks.Repository.UserRepository;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class NotificationService {
@@ -42,27 +43,34 @@ public class NotificationService {
         return notificationRepository.getNotificationsForUser(transId);
     }
 
-    public List<NotificationViewDto> getNotificationsForView(String user_id){
+    public List<NotificationViewDto> getNotificationsForView(String user_id) {
         ObjectId transId = new ObjectId(user_id);
-        if (userRepository.findById(transId).isEmpty())
-            throw new IllegalArgumentException("No user with such id found");
+        userRepository.findById(transId).orElseThrow(() ->
+                new IllegalArgumentException("No user with such id found"));
+
         List<Notification> notifications = notificationRepository.getNotificationsForUser(transId);
-        List<NotificationViewDto> resultList = new ArrayList<>();
-        for (Notification notif : notifications){
-            NotificationViewDto notifViewDto = new NotificationViewDto();
-            notifViewDto.setNotification(notificationMapper.map(notif));
-            notifViewDto.setIcon(getIconFromType(notif.getType()));
-            Optional<User> userOptional = userRepository.findById(new ObjectId(notif.getCauser_id()));
-            if (userOptional.isPresent()) notifViewDto.setCauser(userMapper.map(userOptional.get()));
-            else {
-                notifViewDto.setCauser(generateDeletedUserDetails());
-//                throw new IllegalArgumentException("Not causer with such id found!");
-            }
-            resultList.add(notifViewDto);
-        }
-        return resultList;
+
+        List<ObjectId> causerIds = notifications.stream()
+                .map(notif -> new ObjectId(notif.getCauser_id()))
+                .collect(Collectors.toList());
+
+        List<User> causers = userRepository.findUsers(causerIds);
+        Map<String, UserOutputDto> userMap = causers.stream()
+                .collect(Collectors.toMap(User::getId, userMapper::map));
+
+        return notifications.stream()
+                .map(notif -> {
+                    NotificationViewDto notifViewDto = new NotificationViewDto();
+                    notifViewDto.setNotification(notificationMapper.map(notif));
+                    notifViewDto.setIcon(getIconFromType(notif.getType()));
+                    UserOutputDto causerDto = userMap.get(notif.getCauser_id());
+                    notifViewDto.setCauser(causerDto != null ? causerDto : generateDeletedUserDetails());
+                    return notifViewDto;
+                })
+                .collect(Collectors.toList());
     }
 
+    //for safety
     private UserOutputDto generateDeletedUserDetails(){
         UserOutputDto userOutputDto = new UserOutputDto();
         userOutputDto.setUsername("DeletedUser");
@@ -86,10 +94,10 @@ public class NotificationService {
         }
     }
 
-    //maybe don't need it
-    public NotificationOutputDto findById(String id){
-        return notificationMapper.map(Objects.requireNonNull(notificationRepository.findById(new ObjectId(id)).orElse(null)));
-    }
+//    //maybe don't need it
+//    public NotificationOutputDto findById(String id){
+//        return notificationMapper.map(Objects.requireNonNull(notificationRepository.findById(new ObjectId(id)).orElse(null)));
+//    }
 
     public void addUserNotification(NotificationDto notificationDto){
         if (!notificationRepository.existsByUserIdCauserIdAndType(

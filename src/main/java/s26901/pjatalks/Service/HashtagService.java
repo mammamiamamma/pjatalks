@@ -20,8 +20,6 @@ public class HashtagService {
         this.postRepository = postRepository;
     }
 
-//    @Scheduled(fixedRate = 24 * 60 * 60 * 1000) // Every 24 hours
-//    @Scheduled(fixedRate = 60*1000) // every minute
     @Scheduled(fixedRate = 60*60*1000) // every hour
     public void updateTrendingHashtags() {
         Set<HashtagCount> topHashtags = postRepository.getTopTrendingHashtags(3);

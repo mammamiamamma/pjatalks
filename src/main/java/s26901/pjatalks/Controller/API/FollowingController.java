@@ -1,13 +1,10 @@
 package s26901.pjatalks.Controller.API;
 
 import jakarta.validation.Valid;
-import org.bson.types.ObjectId;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import s26901.pjatalks.Constraints.ObjectIdValidation;
 import s26901.pjatalks.DTO.General.FollowingDto;
-import s26901.pjatalks.Entity.Following;
-import s26901.pjatalks.Entity.User;
 import s26901.pjatalks.Exception.RecordExistsException;
 import s26901.pjatalks.Service.FollowingService;
 
@@ -61,7 +58,7 @@ public class FollowingController {
     public ResponseEntity<?> deleteFollowerFromUser(@ObjectIdValidation @PathVariable String user_id,
                                                     @ObjectIdValidation @PathVariable String follower_id){
         try {
-            if (followingService.deleteFollowerFromUser(follower_id, user_id))
+            if (followingService.deleteFollowerFromUser(new FollowingDto(follower_id, user_id)))
                 return ResponseEntity.ok().build();
             else return ResponseEntity.status(500).build();
         } catch (Exception e){

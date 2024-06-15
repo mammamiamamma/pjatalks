@@ -13,6 +13,7 @@ import s26901.pjatalks.Entity.User;
 import s26901.pjatalks.Entity.UserRole;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 public class UserRepository {
@@ -34,65 +35,59 @@ public class UserRepository {
     }
 
     public List<User> findUsers(List<ObjectId> idList) {
-        List<User> userList = new ArrayList<>();
-        for (ObjectId id : idList){
-            User user = collection
-                    .find(new Document("_id", id))
-                    .map(this::documentToUser)
-                    .first();
-            userList.add(user);
-        }
-        return userList;
+        return collection.find(new Document("_id", new Document("$in", idList)))
+                .map(this::documentToUser)
+                .into(new ArrayList<>());
     }
 
     public Map<User, Integer> findUsers(Map<ObjectId, Integer> idList) {
         Map<User, Integer> userCountMap = new HashMap<>();
-        for (ObjectId id : idList.keySet()){
-            User user = collection
-                    .find(new Document("_id", id))
-                    .map(this::documentToUser)
-                    .first();
-            userCountMap.put(user, idList.get(id));
-        }
+
+        List<ObjectId> ids = new ArrayList<>(idList.keySet());
+
+        collection.find(new Document("_id", new Document("$in", ids)))
+                .forEach((Document doc) -> {
+                    User user = documentToUser(doc);
+                    userCountMap.put(user, idList.get(new ObjectId(user.getId())));
+                });
+
         return userCountMap;
     }
 
     public Map<User, Integer> findUsersByPosts(Map<Post, Integer> postList) {
         Map<User, Integer> userCountMap = new HashMap<>();
-        for (Post post : postList.keySet()){
-            User user = collection
-                    .find(new Document("_id", new ObjectId(post.getUser_id())))
-                    .map(this::documentToUser)
-                    .first();
+        List<ObjectId> userIds = postList.keySet().stream()
+                .map(post -> new ObjectId(post.getUser_id()))
+                .collect(Collectors.toList());
+
+        List<User> users = collection.find(new Document("_id", new Document("$in", userIds)))
+                .map(this::documentToUser)
+                .into(new ArrayList<>());
+
+        Map<ObjectId, User> userIdToUserMap = users.stream()
+                .collect(Collectors.toMap(user -> new ObjectId(user.getId()), user -> user));
+
+        for (Post post : postList.keySet()) {
+            User user = userIdToUserMap.get(new ObjectId(post.getUser_id()));
             userCountMap.put(user, postList.get(post));
         }
+
         return userCountMap;
     }
 
-
-//    public boolean updateUsersLastVisitedTime(ObjectId user_id, Date date){
-//        Document doc = collection.find(new Document("_id", user_id)).first();
-//        if (doc != null){
-//            User user = documentToUser(doc);
-//            user.setLastCheckedNotifications(date);
-//            return true;
-//        }
-//        return false;
-//    }
     public List<User> findUsersByUsernameContaining(String query) {
         Document searchQuery = new Document("username", new Document("$regex", query).append("$options", "i"));
-        List<User> users = new ArrayList<>();
-        collection.find(searchQuery).forEach((Document doc) -> users.add(documentToUser(doc)));
-        return users;
+        return collection.find(searchQuery)
+                .map(this::documentToUser)
+                .into(new ArrayList<>());
     }
 
     public List<User> findUsersForSuggestionsByUsernameContaining(String query) {
         Document searchQuery = new Document("username", new Document("$regex", query)
                 .append("$options", "i"));
-        List<User> users = new ArrayList<>();
-        collection.find(searchQuery).limit(3)
-                .forEach((Document doc) -> users.add(documentToUser(doc)));
-        return users;
+        return collection.find(searchQuery).limit(3)
+                .map(this::documentToUser)
+                .into(new ArrayList<>());
     }
 
     public Optional<User> findById(ObjectId id) {
@@ -115,7 +110,6 @@ public class UserRepository {
         if (result.wasAcknowledged()) {
             return Objects.requireNonNull(result.getInsertedId()).asObjectId().getValue().toHexString();
         }
-        //probably change to exception such that if result was not acknowledged we throw
         return null;
     }
 
@@ -166,12 +160,8 @@ public class UserRepository {
     }
 
     private List<Document> rolesToDocument(Set<UserRole> roles) {
-        List<Document> docs = new ArrayList<>();
-        for (UserRole role : roles) {
-            Document doc = new Document();
-            doc.put("name", role.getName());
-            docs.add(doc);
-        }
-        return docs;
+        return roles.stream()
+                .map(role -> new Document("name", role.getName()))
+                .collect(Collectors.toList());
     }
 }

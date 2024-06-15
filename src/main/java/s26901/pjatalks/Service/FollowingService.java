@@ -12,9 +12,8 @@ import s26901.pjatalks.Mapper.UserMapper;
 import s26901.pjatalks.Repository.FollowingRepository;
 import s26901.pjatalks.Repository.UserRepository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class FollowingService {
@@ -38,30 +37,36 @@ public class FollowingService {
         return followingRepository.getListOfFollowingIds(new ObjectId(user_id));
     }
 
-    public FollowingViewDto getFollowingView(String user_id){
+    public FollowingViewDto getFollowingView(UserOutputDto userOutputDto) {
         FollowingViewDto followingViewDto = new FollowingViewDto();
-        UserOutputDto userOutputDto = userRepository.findById(new ObjectId(user_id)).map(userMapper::map).orElseThrow();
-        List<UserOutputDto> followersDto = new ArrayList<>();
-        List<String> followerIds = followingRepository.getListOfFollowersIds(new ObjectId(user_id));
-        for (String s : followerIds){
-            Optional<User> optionalUser = userRepository.findById(new ObjectId(s));
-            if (optionalUser.isPresent()) followersDto.add(userMapper.map(optionalUser.get()));
-            else System.out.println("CRAZY");
-        }
-//        followingRepository.getListOfFollowersIds(new ObjectId(user_id)).forEach(userId ->
-//                followersDto.add(userMapper.map(
-//                        userRepository.findById(new ObjectId(userId))
-//                                .orElse(
-//                                        new User()
-//                                )))
-//        );
-        List<UserOutputDto> followingDto = new ArrayList<>();
-        followingRepository.getListOfFollowingIds(new ObjectId(user_id)).forEach(userId ->
-                followingDto.add(userMapper.map(userRepository.findById(new ObjectId(userId)).orElse(new User())))
-        );
+
+        ObjectId userId = new ObjectId(userOutputDto.getId());
+
+        List<String> followerIds = followingRepository.getListOfFollowersIds(userId);
+        List<String> followingIds = followingRepository.getListOfFollowingIds(userId);
+
+        List<ObjectId> allUserIds = new ArrayList<>();
+        allUserIds.addAll(followerIds.stream().map(ObjectId::new).toList());
+        allUserIds.addAll(followingIds.stream().map(ObjectId::new).toList());
+
+        List<User> users = userRepository.findUsers(allUserIds);
+        Map<String, UserOutputDto> userMap = users.stream()
+                .collect(Collectors.toMap(User::getId, userMapper::map));
+
+        List<UserOutputDto> followersDto = followerIds.stream()
+                .map(userMap::get)
+                .filter(Objects::nonNull)
+                .toList();
+
+        List<UserOutputDto> followingDto = followingIds.stream()
+                .map(userMap::get)
+                .filter(Objects::nonNull)
+                .toList();
+
         followingViewDto.setUser(userOutputDto);
         followingViewDto.setFollowers(followersDto);
         followingViewDto.setFollowing(followingDto);
+
         return followingViewDto;
     }
 
@@ -75,23 +80,22 @@ public class FollowingService {
         return followingRepository.addFollower(followingMapping.map(followingDto));
     }
 
-    public boolean addFollower(String user_id, String target_id) throws RecordExistsException {
-        if (doesUserFollowUser(user_id, target_id))
-            throw new RecordExistsException("Following record already exists");
-        if (userRepository.findById(new ObjectId(user_id)).isEmpty())
-            throw new IllegalArgumentException("No user with id="+user_id+" found");
-        if (userRepository.findById(new ObjectId(target_id)).isEmpty())
-            throw new IllegalArgumentException("No user with id="+target_id+" found");
-        return followingRepository.addFollower(user_id, target_id);
-    }
+//    public boolean addFollower(String user_id, String target_id) throws RecordExistsException {
+//        if (doesUserFollowUser(user_id, target_id))
+//            throw new RecordExistsException("Following record already exists");
+//        if (userRepository.findById(new ObjectId(user_id)).isEmpty())
+//            throw new IllegalArgumentException("No user with id="+user_id+" found");
+//        if (userRepository.findById(new ObjectId(target_id)).isEmpty())
+//            throw new IllegalArgumentException("No user with id="+target_id+" found");
+//        return followingRepository.addFollower(user_id, target_id);
+//    }
 
-    public boolean deleteFollowerFromUser(String follower_id, String user_id){
-        return followingRepository.deleteFollowerFromUser(new ObjectId(follower_id), new ObjectId(user_id));
-    }
+//    public boolean deleteFollowerFromUser(String follower_id, String user_id){
+//        return followingRepository.deleteFollowerFromUser(new ObjectId(follower_id), new ObjectId(user_id));
+//    }
     public boolean deleteFollowerFromUser(FollowingDto followingDto){
         return followingRepository.deleteFollowerFromUser(new ObjectId(followingDto.getF_follower_id()), new ObjectId(followingDto.getF_user_id()));
     }
-
     public boolean deleteAllFollowersForUser(String user_id){
         return followingRepository.deleteAllFollowersForUser(new ObjectId(user_id));
     }

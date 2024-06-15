@@ -1,8 +1,5 @@
 package s26901.pjatalks;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -16,8 +13,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,8 +20,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import s26901.pjatalks.Service.UserService;
-
-import java.io.IOException;
 
 @Configuration
 @EnableWebSecurity(debug = true)
@@ -87,23 +80,17 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationSuccessHandler successHandler() {
-        return new AuthenticationSuccessHandler() {
-            @Override
-            public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-                System.out.println("Login successful for user: " + authentication.getName());
-                response.sendRedirect("/feed");
-            }
+        return (request, response, authentication) -> {
+            System.out.println("Login successful for user: " + authentication.getName());
+            response.sendRedirect("/feed");
         };
     }
 
     @Bean
     public AuthenticationFailureHandler failureHandler() {
-        return new AuthenticationFailureHandler() {
-            @Override
-            public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
-                System.out.println("Login failed: " + exception.getMessage());
-                response.sendRedirect("/auth?error=true");
-            }
+        return (request, response, exception) -> {
+            System.out.println("Login failed: " + exception.getMessage());
+            response.sendRedirect("/auth?error=true");
         };
     }
     @Bean

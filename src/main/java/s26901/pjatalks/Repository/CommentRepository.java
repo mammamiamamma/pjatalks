@@ -26,9 +26,7 @@ public class CommentRepository {
     }
     public List<Comment> findAllByPost(ObjectId post_id) {
         List<Comment> comments = new ArrayList<>();
-        collection.find(new Document("post_id", post_id)).forEach((Document doc) -> {
-            comments.add(documentToComment(doc));
-        });
+        collection.find(new Document("post_id", post_id)).forEach(doc -> comments.add(documentToComment(doc)));
         return comments;
     }
 

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import s26901.pjatalks.Constraints.ObjectIdValidation;
 import s26901.pjatalks.DTO.General.LikeDto;
+import s26901.pjatalks.DTO.Output.PostOutputDto;
 import s26901.pjatalks.Entity.Post;
 import s26901.pjatalks.Exception.AlreadyLikedException;
 import s26901.pjatalks.Service.LikeService;
@@ -31,7 +32,7 @@ public class LikeController {
     @GetMapping("/user/{user_id}")
     public ResponseEntity<?> getAllLikesByUser(@PathVariable @ObjectIdValidation String user_id){
         try {
-            List<Post> likedByUser = likeService.getLikesByUser(user_id);
+            List<PostOutputDto> likedByUser = likeService.getLikesByUser(user_id);
             return ResponseEntity.ok(likedByUser);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -75,10 +76,9 @@ public class LikeController {
     @PostMapping
     public ResponseEntity<?> addLike(@Valid @RequestBody LikeDto like){
         try {
-            String returnId = likeService.insertNewLike(like);
-            if (returnId == null) return ResponseEntity.status(500).body("Insert not acknowledged");
-            return ResponseEntity.ok(returnId);
-        } catch (IllegalArgumentException | AlreadyLikedException e) {
+//            if (returnId == null) return ResponseEntity.status(500).body("Insert not acknowledged");
+            return ResponseEntity.ok(likeService.toggleLike(like.getPost_id(), like.getUser_id(), like.getTimestamp()));
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

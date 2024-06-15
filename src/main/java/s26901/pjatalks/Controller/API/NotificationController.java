@@ -41,16 +41,16 @@ public class NotificationController {
         }
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getNotification(@PathVariable @ObjectIdValidation String id){
-        try {
-            NotificationOutputDto result = notificationService.findById(id);
-            if (result != null) return ResponseEntity.ok(result);
-            else return ResponseEntity.notFound().build();
-        } catch (Exception e){
-            return ResponseEntity.status(500).body(e.getMessage());
-        }
-    }
+//    @GetMapping("/{id}")
+//    public ResponseEntity<?> getNotification(@PathVariable @ObjectIdValidation String id){
+//        try {
+//            NotificationOutputDto result = notificationService.findById(id);
+//            if (result != null) return ResponseEntity.ok(result);
+//            else return ResponseEntity.notFound().build();
+//        } catch (Exception e){
+//            return ResponseEntity.status(500).body(e.getMessage());
+//        }
+//    }
 
     @PostMapping
     public ResponseEntity<?> addUser(@Valid @RequestBody NotificationDto notificationDto){
