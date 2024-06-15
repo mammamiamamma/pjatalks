@@ -253,13 +253,13 @@ public class UserService implements UserDetailsService {
         return false;
     }
 
-    public List<UserOutputDto> findTop3SuggestedUsers(String id) {
-        Optional<User> loggedInUserOpt = userRepository.findById(new ObjectId(id));
-        if (loggedInUserOpt.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        User loggedInUser = loggedInUserOpt.get();
+    public List<UserOutputDto> findTop3SuggestedUsers(UserOutputDto loggedInUser) {
+//        Optional<User> loggedInUserOpt = userRepository.findById(new ObjectId(id));
+//        if (loggedInUserOpt.isEmpty()) {
+//            return Collections.emptyList();
+//        }
+//
+//        User loggedInUser = loggedInUserOpt.get();
         List<String> followingIds = followingRepository.getListOfFollowingIds(new ObjectId(loggedInUser.getId()));
 
         if (followingIds.isEmpty()) {
@@ -293,13 +293,13 @@ public class UserService implements UserDetailsService {
                 .limit(3)
                 .map(Map.Entry::getKey)
                 .toList();
-
-        return userRepository.findUsers(top3SuggestedUserIds
-                        .stream().map(ObjectId::new)
-                        .collect(Collectors.toList())
-                )
-                .stream().map(userMapper::map)
-                .toList();
+        List<UserOutputDto> listOfUsers = new ArrayList<>();
+        userRepository.findUsers(top3SuggestedUserIds
+                .stream().map(ObjectId::new)
+                .collect(Collectors.toList())).forEach(user -> {
+            if (user!=null) listOfUsers.add(userMapper.map(user));
+        });
+        return listOfUsers;
     }
 
     public List<String> getFollowedUserIds(String id) {

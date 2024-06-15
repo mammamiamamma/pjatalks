@@ -55,7 +55,7 @@ public class FeedViewController {
         Page<PostViewDto> postPage = postService.getViewPostDtos(0, size, userOutputDto);
         Set<HashtagCount> topHashtags = hashtagService.getTrendingHashtags().getHashtag();
         if (userOutputDto != null) {
-            List<UserOutputDto> top3SuggestedUsers = userService.findTop3SuggestedUsers(userOutputDto.getId());
+            List<UserOutputDto> top3SuggestedUsers = userService.findTop3SuggestedUsers(userOutputDto);
             model.addAttribute("suggestedUsers", top3SuggestedUsers);
         }
         model.addAttribute("postPage", postPage);
@@ -86,7 +86,7 @@ public class FeedViewController {
                     List<String> followedUserIds = userService.getFollowedUserIds(userOutputDto.get().getId());
                     Set<HashtagCount> topHashtags = hashtagService.getTrendingHashtags().getHashtag();
                     Page<PostViewDto> postPage = postService.getPostsByUserIds(followedUserIds, 0, size, userOutputDto.get());
-                    List<UserOutputDto> top3SuggestedUsers = userService.findTop3SuggestedUsers(userOutputDto.get().getId());
+                    List<UserOutputDto> top3SuggestedUsers = userService.findTop3SuggestedUsers(userOutputDto.get());
                     model.addAttribute("suggestedUsers", top3SuggestedUsers);
                     model.addAttribute("postPage", postPage);
                     model.addAttribute("topHash", topHashtags);
