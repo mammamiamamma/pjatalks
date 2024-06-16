@@ -86,11 +86,14 @@ public class UserViewController {
                 String username = ((UserDetails) authentication.getPrincipal()).getUsername();
                 if (username != null) {
                     Optional<UserOutputDto> userOutputDto = userService.findByUsername(username);
-                    if (userOutputDto.isPresent() && !userOutputDto.get().getId().equals(id)) {
+                    if (userOutputDto.isPresent() && userOutputDto.get().getId().equals(id)) {
                         model.addAttribute("hasNewNotifications", userService.hasNewNotifications(userOutputDto.get().getId()));
                         FollowingViewDto userViewDto = followingService.getFollowingView(userOutputDto.get());
                         model.addAttribute("followUser", userViewDto);
                     }
+                } else {
+                    model.addAttribute("size", size);
+                    return "following";
                 }
             }
         } catch (NoSuchElementException e){
