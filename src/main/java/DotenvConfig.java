@@ -9,3 +9,5 @@ public class DotenvConfig {
         return Dotenv.configure().ignoreIfMissing().load();
     }
 }
+
+//safe commit
