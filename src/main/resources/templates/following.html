@@ -90,15 +90,15 @@
             <!-- Followers & Following Tabs -->
             <ul class="nav nav-tabs" id="myTab" role="tablist">
                 <li class="nav-item">
-                    <a class="nav-link active" id="followers-tab" data-toggle="tab" href="#followers" role="tab" aria-controls="followers" aria-selected="true">Followers</a>
+                    <a class="nav-link" id="followers-tab" data-toggle="tab" href="#followers" role="tab" aria-controls="followers" th:classappend="${activeTab == null || activeTab == 'followers'} ? 'active' : ''">Followers</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="following-tab" data-toggle="tab" href="#following" role="tab" aria-controls="following" aria-selected="false">Following</a>
+                    <a class="nav-link" id="following-tab" data-toggle="tab" href="#following" role="tab" aria-controls="following" th:classappend="${activeTab == 'following'} ? 'active' : ''">Following</a>
                 </li>
             </ul>
             <div class="tab-content" id="myTabContent">
                 <!-- Followers Section -->
-                <div class="tab-pane fade show active" id="followers" role="tabpanel" aria-labelledby="followers-tab">
+                <div class="tab-pane fade" id="followers" role="tabpanel" aria-labelledby="followers-tab" th:classappend="${activeTab == null || activeTab == 'followers'} ? 'show active' : ''">
                     <div class="profile-section followers-following-list">
                         <h5>Followers</h5>
                         <div th:if="${!followUser.followers.isEmpty()}" th:each="follower : ${followUser.followers}">
@@ -107,15 +107,6 @@
                                     <img th:src="@{/img/profilepic.png}" class="mr-3 rounded-circle profile-pic" alt="Follower's profile Picture">
                                     <h6 class="mt-0 mb-0" th:text="${follower.username}">Username</h6>
                                 </a>
-<!--                                <a th:href="@{/user/{id}(id=${follower.id})}">-->
-<!--                                    <img th:src="@{/img/profilepic.png}" class="profile-pic" alt="Follower Profile Picture">-->
-<!--                                </a>-->
-<!--                                <div>-->
-<!--                                    <a th:href="@{/user/{id}(id=${follower.id})}">-->
-<!--                                        <h6 th:text="${follower.username}">Follower Username</h6>-->
-<!--                                    </a>-->
-<!--                                    <p class="text-muted" th:text="${follower.shortBio}">Short bio about the follower.</p>-->
-<!--                                </div>-->
                             </div>
                         </div>
                         <div th:unless="${!followUser.followers.isEmpty()}" class="no-followers-found" th:text="|No followers found.|"></div>
@@ -128,7 +119,7 @@
                     </div>
                 </div>
                 <!-- Following Section -->
-                <div class="tab-pane fade" id="following" role="tabpanel" aria-labelledby="following-tab">
+                <div class="tab-pane fade" id="following" role="tabpanel" aria-labelledby="following-tab" th:classappend="${activeTab == 'following'} ? 'show active' : ''">
                     <div class="profile-section followers-following-list">
                         <h5>Following</h5>
                         <div th:if="${!followUser.following.isEmpty()}" th:each="following : ${followUser.following}">
@@ -137,9 +128,6 @@
                                     <img th:src="@{/img/profilepic.png}" class="mr-3 rounded-circle profile-pic" alt="Following Profile Picture">
                                     <h6 class="mt-0 mb-0" th:text="${following.username}">Following Username</h6>
                                 </a>
-<!--                                <div>-->
-<!--                                    <p class="text-muted" th:text="${following.shortBio}">Short bio about the following user.</p>-->
-<!--                                </div>-->
                             </div>
                         </div>
                         <div th:unless="${!followUser.following.isEmpty()}" class="no-following-found" th:text="|No following found.|"></div>

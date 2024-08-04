@@ -40,7 +40,7 @@
             padding: 10px;
         }
         h5 {
-            color: black; /* Set the text color to black */
+            color: black;
         }
     </style>
 </head>
@@ -54,26 +54,6 @@
         <div class="col-md-8 offset-md-2">
             <!-- Post -->
             <div th:replace="~{parts/_post.html :: post(${isClickableLink})}"></div>
-<!--            <div class="post mb-3">-->
-<!--                <div class="card">-->
-<!--                    <div class="post-header d-flex align-items-center">-->
-<!--                        <img th:src="@{/img/profilepic.png}" class="mr-3 rounded-circle profile-pic" alt="Profile Picture">-->
-<!--                        <h5 class="mt-0 mb-0">Username</h5>-->
-<!--                        <span class="timestamp ml-auto">2 hours ago</span>-->
-<!--                    </div>-->
-<!--                    <div class="card-body">-->
-<!--                        <p class="card-text">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>-->
-<!--                        &lt;!&ndash; Uncomment if there is a post image &ndash;&gt;-->
-<!--                        &lt;!&ndash; <img src="C:\Users\Ilya\Desktop\tpoprojectpics\rsc\profilepic.png" class="img-fluid" alt="Post Image"> &ndash;&gt;-->
-<!--                    </div>-->
-<!--                    <div class="post-footer d-flex justify-content-start align-items-center">-->
-<!--                        <img th:src="@{/img/heart.png}" class="action-icon" alt="Like">-->
-<!--                        <span class="like-count">123</span>-->
-<!--                        <img th:src="@{/img/heart.png}" class="action-icon" alt="Comment">-->
-<!--                        <span class="comment-count">45</span>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </div>-->
             <!-- Comments Section -->
             <div class="comments-section">
                 <h5>Comments</h5>
@@ -103,18 +83,7 @@
                     <div th:each="comment : ${commentList}">
                         <div th:replace="~{parts/_comment.html :: comment}"></div>
                     </div>
-<!--                    <div class="card">-->
-<!--                        <div class="post-header d-flex align-items-center">-->
-<!--                            <img th:src="@{/img/profilepic.png}" class="mr-3 rounded-circle profile-pic" alt="Profile Picture">-->
-<!--                            <h6 class="mt-0 mb-0">Commenter Name</h6>-->
-<!--                            <span class="timestamp ml-auto">1 hour ago</span>-->
-<!--                        </div>-->
-<!--                        <div class="card-body">-->
-<!--                            <p class="card-text">This is a comment text. Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>-->
-<!--                        </div>-->
-<!--                    </div>-->
                 </div>
-                <!-- Add more comments as needed -->
             </div>
         </div>
     </div>

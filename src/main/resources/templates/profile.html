@@ -75,7 +75,7 @@
             width: 100%;
         }
         h5 {
-            color: black; /* Set the text color to black */
+            color: black;
         }
         .alert-success {
             margin-top: 20px;
@@ -84,8 +84,8 @@
             border-color: #c3e6cb;
         }
         .btn-follow, .btn-unfollow {
-            width: 100px; /* Adjust the width as needed */
-            height: 38px; /* Adjust the height as needed */
+            width: 100px;
+            height: 38px;
             padding: 6px 12px;
             font-size: 14px;
         }
@@ -161,7 +161,7 @@
                     </div>
                     <div class="stat">
                         <span th:text="${user.followingCounter}">0</span><br>
-                        <a th:href="@{'/user/' + ${user.user.getId()} + '/followers'}">Following</a>
+                        <a th:href="@{'/user/' + ${user.user.getId()} + '/following'}">Following</a>
                     </div>
                 </div>
                 <div class="profile-section short-bio-box">

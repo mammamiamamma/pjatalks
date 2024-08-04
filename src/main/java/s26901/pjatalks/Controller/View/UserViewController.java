@@ -90,6 +90,36 @@ public class UserViewController {
                         model.addAttribute("hasNewNotifications", userService.hasNewNotifications(userOutputDto.get().getId()));
                         FollowingViewDto userViewDto = followingService.getFollowingView(userOutputDto.get());
                         model.addAttribute("followUser", userViewDto);
+                        model.addAttribute("activeTab", "followers");
+                    }
+                } else {
+                    model.addAttribute("size", size);
+                    return "following";
+                }
+            }
+        } catch (NoSuchElementException e){
+            model.addAttribute("errorValid", "No user with such id found!");
+        } catch (Exception e){
+            model.addAttribute("errorValid", e.getMessage());
+        }
+        model.addAttribute("size", size);
+        return "following";
+    }
+
+    @GetMapping("/{id}/following")
+    public String getUserFollowing(@PathVariable @ObjectIdValidation String id, Model model,
+                                   @RequestParam(defaultValue = "15") int size){
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.isAuthenticated()) {
+                String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+                if (username != null) {
+                    Optional<UserOutputDto> userOutputDto = userService.findByUsername(username);
+                    if (userOutputDto.isPresent() && userOutputDto.get().getId().equals(id)) {
+                        model.addAttribute("hasNewNotifications", userService.hasNewNotifications(userOutputDto.get().getId()));
+                        FollowingViewDto userViewDto = followingService.getFollowingView(userOutputDto.get());
+                        model.addAttribute("followUser", userViewDto);
+                        model.addAttribute("activeTab", "following");
                     }
                 } else {
                     model.addAttribute("size", size);
