@@ -3,11 +3,9 @@ package s26901.pjatalks.Controller.View;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -31,6 +29,15 @@ public class AuthController {
     public AuthController(UserService userService, AuthService authService) {
         this.userService = userService;
         this.authService = authService;
+    }
+
+    @GetMapping("/")
+    public String redirectToDefaultPage(){
+        if (isAuthenticated()) {
+            return "redirect:/feed";
+        } else {
+            return "redirect:/auth";
+        }
     }
 
     @GetMapping("/auth")
@@ -69,12 +76,6 @@ public class AuthController {
             return "redirect:/auth";
         }
     }
-
-//    @GetMapping("/register")
-//    public String showRegistrationForm(Model model) {
-//        model.addAttribute("userInputDto", new UserInputDto());
-//        return "registration";
-//    }
 
     @PostMapping("/register")
     public String registerUser(@Valid @ModelAttribute("userInputDto") UserInputDto userInputDto,
