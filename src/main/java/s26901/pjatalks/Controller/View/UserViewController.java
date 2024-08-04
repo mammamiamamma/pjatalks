@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/user")
 public class UserViewController {
+    private final String REDIRECT_FEED = "redirect:/feed";
     private final UserService userService;
     private final FollowingService followingService;
     private final NotificationService notificationService;
@@ -51,26 +52,15 @@ public class UserViewController {
             UserViewDto userViewDto = userService.getUserForView(id, 0, size);
             model.addAttribute("user", userViewDto);
 
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication != null && authentication.isAuthenticated()) {
-                String username = ((UserDetails) authentication.getPrincipal()).getUsername();
-                if (username != null) {
-                    Optional<UserOutputDto> userOutputDto = userService.findByUsername(username);
-                    int followStatus = 0; // 1 if following, -1 if not
-                    if (userOutputDto.isPresent() && !userOutputDto.get().getId().equals(id)) {
-                        followStatus = followingService.doesUserFollowUser(userOutputDto.get().getId(), id) ? 1 : -1;
-                        model.addAttribute("hasNewNotifications", userService.hasNewNotifications(userOutputDto.get().getId()));
-                    }
-                    model.addAttribute("followStatus", followStatus);
-                }
-            }
+            handleAuthenticatedUserForProfile(model, id);
         } catch (NoSuchElementException e){
             model.addAttribute("errorValid", "No user with such id found!");
-            return "redirect:/feed";
+            return REDIRECT_FEED;
         } catch (Exception e){
             model.addAttribute("errorValid", e.getMessage());
-            return "redirect:/feed";
+            return REDIRECT_FEED;
         }
+
         model.addAttribute("size", size);
         model.addAttribute("followRequest", new FollowingDto());
         model.addAttribute("isClickableLink", true);
@@ -80,84 +70,58 @@ public class UserViewController {
     @GetMapping("/{id}/followers")
     public String getUserFollowers(@PathVariable @ObjectIdValidation String id, Model model,
                           @RequestParam(defaultValue = "15") int size){
-        try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication != null && authentication.isAuthenticated()) {
-                String username = ((UserDetails) authentication.getPrincipal()).getUsername();
-                if (username != null) {
-                    Optional<UserOutputDto> userOutputDto = userService.findByUsername(username);
-                    if (userOutputDto.isPresent() && userOutputDto.get().getId().equals(id)) {
-                        model.addAttribute("hasNewNotifications", userService.hasNewNotifications(userOutputDto.get().getId()));
-                        FollowingViewDto userViewDto = followingService.getFollowingView(userOutputDto.get());
-                        model.addAttribute("followUser", userViewDto);
-                        model.addAttribute("activeTab", "followers");
-                    }
-                } else {
-                    model.addAttribute("size", size);
-                    return "following";
-                }
-            }
-        } catch (NoSuchElementException e){
-            model.addAttribute("errorValid", "No user with such id found!");
-        } catch (Exception e){
-            model.addAttribute("errorValid", e.getMessage());
-        }
-        model.addAttribute("size", size);
-        return "following";
+        return getUserFollowView(id, model, size, "followers");
     }
 
     @GetMapping("/{id}/following")
     public String getUserFollowing(@PathVariable @ObjectIdValidation String id, Model model,
                                    @RequestParam(defaultValue = "15") int size){
+        return getUserFollowView(id, model, size, "following");
+    }
+
+    private String getUserFollowView(String id, Model model, int size, String activeTab) {
         try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication != null && authentication.isAuthenticated()) {
-                String username = ((UserDetails) authentication.getPrincipal()).getUsername();
-                if (username != null) {
-                    Optional<UserOutputDto> userOutputDto = userService.findByUsername(username);
-                    if (userOutputDto.isPresent() && userOutputDto.get().getId().equals(id)) {
-                        model.addAttribute("hasNewNotifications", userService.hasNewNotifications(userOutputDto.get().getId()));
-                        FollowingViewDto userViewDto = followingService.getFollowingView(userOutputDto.get());
-                        model.addAttribute("followUser", userViewDto);
-                        model.addAttribute("activeTab", "following");
-                    }
-                } else {
-                    model.addAttribute("size", size);
-                    return "following";
-                }
-            }
-        } catch (NoSuchElementException e){
+            handleAuthenticatedUserForNotifications(model, id);
+        } catch (NoSuchElementException e) {
             model.addAttribute("errorValid", "No user with such id found!");
-        } catch (Exception e){
+        } catch (Exception e) {
             model.addAttribute("errorValid", e.getMessage());
+        }
+
+        UserOutputDto userOutputDto = userService.getUserById(id);
+        if (userOutputDto != null) {
+            FollowingViewDto userViewDto = followingService.getFollowingView(userOutputDto);
+            model.addAttribute("followUser", userViewDto);
+            model.addAttribute("activeTab", activeTab);
         }
         model.addAttribute("size", size);
         return "following";
     }
 
-//    @PostMapping("/follow")
-//    public String followUser(@AuthenticationPrincipal UserPrincipal userPrincipal,
-//                             @ObjectIdValidation @ModelAttribute("userId") String userId,
-//                             RedirectAttributes redirectAttributes,
-//                             @RequestHeader(value = "Referer", required = false) String referer){
-//        try {
-//            if (userPrincipal != null){
-//                Optional<UserOutputDto> userOutputDto = userService.findByUsername(userPrincipal.getName());
-//                if (userOutputDto.isPresent()){
-//                    if (followingService.addFollower(userOutputDto.get().getId(), userId))
-//                        redirectAttributes.addFlashAttribute("followSuccess", true);
-//                    else redirectAttributes.addFlashAttribute("followSuccess", false);
-//                } else throw new IllegalArgumentException("How is this even possible?");
-//            }
-//        } catch (RecordExistsException e){
-//            redirectAttributes.addFlashAttribute
-//                    ("error", "You already follow this user");
-//        } catch (IllegalArgumentException | ConstraintViolationException e){
-//            redirectAttributes.addFlashAttribute
-//                    ("error", e.getMessage());
-//        }
-//        return "redirect:" + (referer != null ? referer : "/feed");
-//    }
+    private void handleAuthenticatedUserForProfile(Model model, String id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+            Optional<UserOutputDto> userOutputDto = userService.findByUsername(username);
+            int followStatus = 0;
+            if (userOutputDto.isPresent() && !userOutputDto.get().getId().equals(id)) {
+                followStatus = followingService.doesUserFollowUser(userOutputDto.get().getId(), id) ? 1 : -1;
+                model.addAttribute("hasNewNotifications", userService.hasNewNotifications(userOutputDto.get().getId()));
+            }
+            model.addAttribute("followStatus", followStatus);
+        }
+    }
+
+    private void handleAuthenticatedUserForNotifications(Model model, String id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+            Optional<UserOutputDto> userOutputDto = userService.findByUsername(username);
+            if (userOutputDto.isPresent() && !userOutputDto.get().getId().equals(id)) {
+                model.addAttribute("hasNewNotifications", userService.hasNewNotifications(userOutputDto.get().getId()));
+            }
+        }
+    }
 
     @PostMapping("/follow")
     public String followUser(
@@ -173,7 +137,7 @@ public class UserViewController {
                                         FieldError::getField,
                                         FieldError::getDefaultMessage
                                 )));
-                return "redirect:" + (referer != null ? referer : "/feed");
+                return referer != null ? ("redirect:" + referer) : REDIRECT_FEED;
             }
             if (followingService.addFollower(followingDto)!=null){
                 redirectAttributes.addFlashAttribute("followSuccess", true);
@@ -186,7 +150,7 @@ public class UserViewController {
             redirectAttributes.addFlashAttribute
                     ("errorValid", e.getMessage());
         }
-        return "redirect:" + (referer != null ? referer : "/feed");
+        return referer != null ? ("redirect:" + referer) : REDIRECT_FEED;
     }
 
     @PostMapping("/unfollow")
@@ -203,17 +167,16 @@ public class UserViewController {
                                         FieldError::getField,
                                         FieldError::getDefaultMessage
                                 )));
-                return "redirect:" + (referer != null ? referer : "/feed");
+                return referer != null ? ("redirect:" + referer) : REDIRECT_FEED;
             }
             if (followingService.deleteFollowerFromUser(followingDto)){
                 redirectAttributes.addFlashAttribute("unfollowSuccess", true);
             } else redirectAttributes.addFlashAttribute("unfollowSuccess", false);
-//            redirectAttributes.addFlashAttribute("success", "You have unfollowed this user");
         } catch (Exception e){
             redirectAttributes.addFlashAttribute
                     ("error", e.getMessage());
         }
-        return "redirect:" + (referer != null ? referer : "/feed");
+        return referer != null ? ("redirect:" + referer) : REDIRECT_FEED;
     }
 
     @PostMapping("/updateBio")
@@ -250,9 +213,9 @@ public class UserViewController {
     }
 
     @ExceptionHandler({HandlerMethodValidationException.class})
-    public String handle(HandlerMethodValidationException e, RedirectAttributes redirectAttributes){
+    public String handle(RedirectAttributes redirectAttributes){
         redirectAttributes.addFlashAttribute("errorValid", "Error - User/Post with provided ID not found");
-        return "redirect:/feed";
+        return REDIRECT_FEED;
     }
 }
 
