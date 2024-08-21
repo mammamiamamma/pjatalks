@@ -21,7 +21,6 @@ import s26901.pjatalks.Entity.Post;
 import s26901.pjatalks.SupportEntities.HashtagCount;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Repository
 public class PostRepository {

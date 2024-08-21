@@ -97,9 +97,6 @@ public class SecurityConfig {
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) -> web.debug(webSecurityDebug);
     }
-//    @Bean
-//    public UserDetailsService userDetailsService(UserService userService) {
-//        return userService;
 
     @Bean
     public UserDetailsService userDetailsService(UserService userService) {

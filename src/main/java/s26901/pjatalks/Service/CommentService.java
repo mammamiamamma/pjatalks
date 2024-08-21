@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import s26901.pjatalks.DTO.General.CommentDto;
 import s26901.pjatalks.DTO.Output.UserOutputDto;
 import s26901.pjatalks.DTO.View.CommentViewDto;
-import s26901.pjatalks.Entity.Comment;
 import s26901.pjatalks.Entity.User;
 import s26901.pjatalks.Exception.NotAcknowledgedException;
 import s26901.pjatalks.Mapper.CommentMapper;
@@ -14,7 +13,6 @@ import s26901.pjatalks.Repository.CommentRepository;
 import s26901.pjatalks.Repository.PostRepository;
 import s26901.pjatalks.Repository.UserRepository;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -69,24 +67,24 @@ public class CommentService {
 
 
 
-    public List<CommentDto> findAllByUser(String user_id){
-        ObjectId userObjectId = new ObjectId(user_id);
-        if (userRepository.findById(userObjectId).isEmpty()) //do we need it?
-            throw new IllegalArgumentException("No user with such id found!");
-        return commentRepository.findAllByUser(userObjectId).stream().map(commentMapper::map).toList();
-    }
+//    public List<CommentDto> findAllByUser(String user_id){
+//        ObjectId userObjectId = new ObjectId(user_id);
+//        if (userRepository.findById(userObjectId).isEmpty()) //do we need it?
+//            throw new IllegalArgumentException("No user with such id found!");
+//        return commentRepository.findAllByUser(userObjectId).stream().map(commentMapper::map).toList();
+//    }
 
     public boolean deleteCommentFromPost(String user_id, String post_id){
         return commentRepository.deleteCommentFromPost(new ObjectId(user_id), new ObjectId(post_id));
     }
 
-    public boolean deleteCommentsByUser(String user_id){
-        return commentRepository.deleteCommentsByUser(new ObjectId(user_id));
-    }
+//    public boolean deleteCommentsByUser(String user_id){
+//        return commentRepository.deleteCommentsByUser(new ObjectId(user_id));
+//    }
 
-    public boolean deleteCommentsOfPost(String post_id){
-        return commentRepository.deleteCommentsOfPost(new ObjectId(post_id));
-    }
+//    public boolean deleteCommentsOfPost(String post_id){
+//        return commentRepository.deleteCommentsOfPost(new ObjectId(post_id));
+//    }
 
     public CommentViewDto insertCommentToPost(CommentDto comment) throws NotAcknowledgedException {
         String resultId = commentRepository.insertCommentToPost(commentMapper.map(comment));

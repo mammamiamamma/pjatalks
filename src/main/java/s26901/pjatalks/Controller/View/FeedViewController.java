@@ -49,15 +49,14 @@ public class FeedViewController {
                     userOutputDto = userOutputDtoOpt.get();
                     boolean hasNewNotifications = userService.hasNewNotifications(userOutputDtoOpt.get().getId());
                     model.addAttribute("hasNewNotifications", hasNewNotifications);
+                    List<UserOutputDto> top3SuggestedUsers = userService.findTop3SuggestedUsers(userOutputDto);
+                    model.addAttribute("suggestedUsers", top3SuggestedUsers);
                 }
             }
         }
         Page<PostViewDto> postPage = postService.getViewPostDtos(0, size, userOutputDto);
         Set<HashtagCount> topHashtags = hashtagService.getTrendingHashtags().getHashtag();
-        if (userOutputDto != null) {
-            List<UserOutputDto> top3SuggestedUsers = userService.findTop3SuggestedUsers(userOutputDto);
-            model.addAttribute("suggestedUsers", top3SuggestedUsers);
-        }
+
         model.addAttribute("postPage", postPage);
         model.addAttribute("topHash", topHashtags);
         model.addAttribute("size", size);

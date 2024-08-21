@@ -3,7 +3,6 @@ package s26901.pjatalks.Repository;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Sorts;
 import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.InsertOneResult;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -41,17 +40,14 @@ public class NotificationRepository {
         List<Notification> notifications = new ArrayList<>();
         collection.find(new Document("user_id", user_Id))
                 .sort(Sorts.descending("timestamp"))
-                .forEach(document -> {
-                            notifications.add(documentToNotification(document));
-                        });
+                .forEach(document -> notifications.add(documentToNotification(document)));
         return notifications;
     }
 
-    public boolean insertNotification(Notification notification){
+    public void insertNotification(Notification notification){
         ObjectId newId = new ObjectId();
         notification.setId(newId.toHexString());
-        InsertOneResult result = collection.insertOne(notificationToDocument(notification));
-        return result.wasAcknowledged();
+        collection.insertOne(notificationToDocument(notification));
     }
 
     public boolean deleteNotificationsOfUser(ObjectId user_id){

@@ -8,10 +8,10 @@ import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Repository;
 import s26901.pjatalks.Entity.Following;
-import s26901.pjatalks.Entity.User;
-import s26901.pjatalks.Entity.UserRole;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 @Repository
 public class FollowingRepository {
@@ -29,18 +29,14 @@ public class FollowingRepository {
     public List<String> getListOfFollowersIds(ObjectId user_id){
         List<String> followerList = new ArrayList<>();
         collection.find(new Document("F_user_id", user_id))
-                .forEach(doc -> {
-                    followerList.add(doc.getObjectId("F_follower_id").toHexString());
-                });
+                .forEach(doc -> followerList.add(doc.getObjectId("F_follower_id").toHexString()));
         return followerList;
     }
 
     public List<String> getListOfFollowingIds(ObjectId user_id){
         List<String> followerList = new ArrayList<>();
         collection.find(new Document("F_follower_id", user_id))
-                .forEach(doc -> {
-                    followerList.add(doc.getObjectId("F_user_id").toHexString());
-                });
+                .forEach(doc -> followerList.add(doc.getObjectId("F_user_id").toHexString()));
         return followerList;
     }
 
@@ -90,26 +86,26 @@ public class FollowingRepository {
         return result.wasAcknowledged();
     }
 
-    private User documentToUser(Document doc) {
-        User user = new User();
-        user.setId(doc.getObjectId("_id").toHexString());
-        user.setUsername(doc.getString("username"));
-        user.setPassword(doc.getString("password"));
-        user.setEmailAddress(doc.getString("emailAddress"));
-        user.setShortBio(doc.getString("shortBio"));
-        user.setRoles(documentToRoles(doc.getList("roles", Document.class)));
-        return user;
-    }
-    private Set<UserRole> documentToRoles(List<Document> docs) {
-        if (docs == null) {
-            return new HashSet<>();
-        }
-        Set<UserRole> roles = new HashSet<>();
-        for (Document doc : docs) {
-            roles.add(new UserRole(doc.getString("name")));
-        }
-        return roles;
-    }
+//    private User documentToUser(Document doc) {
+//        User user = new User();
+//        user.setId(doc.getObjectId("_id").toHexString());
+//        user.setUsername(doc.getString("username"));
+//        user.setPassword(doc.getString("password"));
+//        user.setEmailAddress(doc.getString("emailAddress"));
+//        user.setShortBio(doc.getString("shortBio"));
+//        user.setRoles(documentToRoles(doc.getList("roles", Document.class)));
+//        return user;
+//    }
+//    private Set<UserRole> documentToRoles(List<Document> docs) {
+//        if (docs == null) {
+//            return new HashSet<>();
+//        }
+//        Set<UserRole> roles = new HashSet<>();
+//        for (Document doc : docs) {
+//            roles.add(new UserRole(doc.getString("name")));
+//        }
+//        return roles;
+//    }
 
 
     private Document followingToDocument(Following following) {

@@ -139,27 +139,27 @@ public class UserService implements UserDetailsService {
 //        return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginInput.getUsername(), loginInput.getPassword()));
 //    }
 
-    public boolean addRoleToUser(String user_id, String role_name) throws RoleNotFoundException{
+    public void addRoleToUser(String user_id, String role_name) throws RoleNotFoundException{
         UserRole userRole = rolesRepository.findByName(role_name);
         if (userRole == null) throw new RoleNotFoundException("No such role found!");
         User user = userRepository.findById(new ObjectId(user_id)).orElseThrow();
         user.addRole(userRole);
-        return userRepository.updateUser(new ObjectId(user_id), user);
+        userRepository.updateUser(new ObjectId(user_id), user);
     }
 
-    public boolean deleteRoleFromUser(String user_id, String role_name) throws RoleNotFoundException{
+    public void deleteRoleFromUser(String user_id, String role_name) throws RoleNotFoundException{
         UserRole userRole = rolesRepository.findByName(role_name);
         if (userRole == null) throw new RoleNotFoundException("No such role found!");
         User user = userRepository.findById(new ObjectId(user_id)).orElseThrow();
         user.deleteRoleByName(userRole.getName());
-        return userRepository.updateUser(new ObjectId(user_id), user);
+        userRepository.updateUser(new ObjectId(user_id), user);
     }
 
     public Optional<UserOutputDto> findByUsername(String username){
         return userRepository.findUserByUsername(username).map(userMapper::map);
     }
     @Transactional
-    public boolean deleteUser(@ObjectIdValidation String userId) throws NotAcknowledgedException {
+    public void deleteUser(@ObjectIdValidation String userId) throws NotAcknowledgedException {
         ObjectId userObjectId = new ObjectId(userId);
         boolean acknowledged = commentRepository.deleteCommentsByUser(userObjectId) &&
                 followingRepository.deleteAllFollowersForUser(userObjectId) &&
@@ -171,7 +171,6 @@ public class UserService implements UserDetailsService {
         if (!acknowledged) {
             throw new NotAcknowledgedException("Deletion not acknowledged by database");
         }
-        return true;
     }
 
     @Transactional

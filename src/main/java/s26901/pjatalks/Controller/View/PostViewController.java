@@ -208,7 +208,7 @@ public class PostViewController {
     }
 
     private void sendCommentNotificationToPostsAuthor(String user_id, String post_id){
-        PostOutputDto postOutputDto = postService.getPostByIdApi(post_id);
+        PostOutputDto postOutputDto = postService.getPostById(post_id);
         UserOutputDto notificationReciever = userService.getUserById(postOutputDto.getUser_id());
         if (notificationReciever.getId().equals(user_id)) return; //don't send notifications to yourself
         NotificationDto notificationDto = new NotificationDto(
@@ -222,7 +222,7 @@ public class PostViewController {
     }
 
     private void sendLikeNotificationToPostsAuthor(String user_id, String post_id){
-        PostOutputDto postOutputDto = postService.getPostByIdApi(post_id);
+        PostOutputDto postOutputDto = postService.getPostById(post_id);
         UserOutputDto notificationReciever = userService.getUserById(postOutputDto.getUser_id());
         if (notificationReciever.getId().equals(user_id)) return; //don't send notifications to yourself
         NotificationDto notificationDto = new NotificationDto(
@@ -235,7 +235,7 @@ public class PostViewController {
         notificationService.addUserNotification(notificationDto);
     }
     @ExceptionHandler({HandlerMethodValidationException.class})
-    public String handle(HandlerMethodValidationException e, RedirectAttributes redirectAttributes){
+    public String handle(RedirectAttributes redirectAttributes){
         redirectAttributes.addFlashAttribute("errorValid", "Error - User/Post with provided ID not found");
         return "redirect:/feed";
     }

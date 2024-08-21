@@ -23,9 +23,7 @@ import s26901.pjatalks.Repository.PostRepository;
 import s26901.pjatalks.Entity.Post;
 import s26901.pjatalks.Repository.UserRepository;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -74,11 +72,12 @@ public class PostService {
         userFromPostDto.setUsername("Anon");
         return userFromPostDto;
     }
+
     public List<PostOutputDto> getPostsByUserId(String id){
         return postRepository.findByUserId(new ObjectId(id)).stream().map(postMapper::map).toList();
     }
 
-    public PostOutputDto getPostByIdApi(String id) {
+    public PostOutputDto getPostById(String id) {
         return postRepository.findById(new ObjectId(id))
                 .map(postMapper::map)
                 .orElse(null);
@@ -136,9 +135,9 @@ public class PostService {
     }
 
     @Transactional
-    public boolean deletePost(String postId) throws NotAcknowledgedException {
+    public void deletePost(String postId) throws NotAcknowledgedException {
         deletePostDependencies(postId);
-        return postRepository.deletePost(new ObjectId(postId));
+        postRepository.deletePost(new ObjectId(postId));
     }
 
     private void deletePostDependencies(String postId) throws NotAcknowledgedException {

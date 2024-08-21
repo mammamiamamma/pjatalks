@@ -29,13 +29,13 @@ public class FollowingService {
         this.userMapper = userMapper;
     }
 
-    public List<String> getListOfFollowersForUser(String user_id){
-        return followingRepository.getListOfFollowersIds(new ObjectId(user_id));
-    }
-
-    public List<String> getListOfFollowingForUser(String user_id){
-        return followingRepository.getListOfFollowingIds(new ObjectId(user_id));
-    }
+//    public List<String> getListOfFollowersForUser(String user_id){
+//        return followingRepository.getListOfFollowersIds(new ObjectId(user_id));
+//    }
+//
+//    public List<String> getListOfFollowingForUser(String user_id){
+//        return followingRepository.getListOfFollowingIds(new ObjectId(user_id));
+//    }
 
     public FollowingViewDto getFollowingView(UserOutputDto userOutputDto) {
         FollowingViewDto followingViewDto = new FollowingViewDto();

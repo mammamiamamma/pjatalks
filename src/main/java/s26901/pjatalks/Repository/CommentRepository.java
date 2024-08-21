@@ -30,13 +30,11 @@ public class CommentRepository {
         return comments;
     }
 
-    public List<Comment> findAllByUser(ObjectId user_id) {
-        List<Comment> comments = new ArrayList<>();
-        collection.find(new Document("user_id", user_id)).forEach((Document doc) -> {
-            comments.add(documentToComment(doc));
-        });
-        return comments;
-    }
+//    public List<Comment> findAllByUser(ObjectId user_id) {
+//        List<Comment> comments = new ArrayList<>();
+//        collection.find(new Document("user_id", user_id)).forEach((Document doc) -> comments.add(documentToComment(doc)));
+//        return comments;
+//    }
 
     public long countCommentsByPost(ObjectId post_id){
         return collection.countDocuments(new Document("post_id", post_id));
